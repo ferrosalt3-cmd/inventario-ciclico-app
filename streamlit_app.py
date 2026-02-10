@@ -9,15 +9,7 @@ from datetime import datetime
 # Configuración de la página
 st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭")
 
-# --- RESETEAR CATÁLOGO SI ES NECESARIO (quitar después de la primera ejecución) ---
-CATALOGO_PATH = "catalogo_productos.json"
-if os.path.exists(CATALOGO_PATH):
-    os.remove(CATALOGO_PATH)  # Borra el catálogo viejo
-    st.info("🔄 Catálogo actualizado a nueva versión")
-
-# Título principal
 st.title("🏭 Sistema de Inventario Cíclico - Sulfatos")
-
 st.write("Registro de inventario con base de datos permanente")
 
 # --- CONFIGURACIÓN ARCHIVOS ---
@@ -29,7 +21,26 @@ def cargar_catalogo():
     """Carga el catálogo desde archivo JSON o crea uno por defecto"""
     try:
         with open(CATALOGO_PATH, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            catalogo = json.load(f)
+            # Verificar si es formato antiguo (sin campo "unidad")
+            necesita_actualizar = False
+            for nombre, datos in catalogo.items():
+                if "unidad" not in datos:
+                    # Determinar unidad basado en la presentación
+                    if "lt" in datos["presentacion"].lower():
+                        datos["unidad"] = "lt"
+                    else:
+                        datos["unidad"] = "kg"
+                    # Renombrar factor_kg a factor si existe
+                    if "factor_kg" in datos and "factor" not in datos:
+                        datos["factor"] = datos["factor_kg"]
+                    necesita_actualizar = True
+            
+            if necesita_actualizar:
+                guardar_catalogo(catalogo)
+                st.info("🔄 Catálogo actualizado a nueva versión")
+            return catalogo
+            
     except FileNotFoundError:
         # Catálogo inicial con tus 5 productos
         catalogo_default = {
@@ -144,8 +155,7 @@ producto_desc = st.selectbox(
 
 # Obtener datos del producto seleccionado (esto actualiza automáticamente)
 datos_producto = CATALOGO_PRODUCTOS[producto_desc]
-es_kg = datos_producto["unidad"] == "kg"
-unidad_label = "kg" if es_kg else "lt"
+unidad_label = datos_producto.get("unidad", "kg")  # Default a kg si no existe
 
 # Mostrar datos del producto seleccionado (actualización visual)
 col_info1, col_info2, col_info3 = st.columns(3)
@@ -177,12 +187,13 @@ with st.form("formulario_inventario"):
             help="Número de sacos, bidones, etc."
         )
     with col6:
-        total_calculado = cantidad_unidades * datos_producto["factor"]
+        factor = datos_producto.get("factor", datos_producto.get("factor_kg", 1))
+        total_calculado = cantidad_unidades * factor
         st.number_input(
             f"Total {unidad_label}", 
             value=float(total_calculado), 
             disabled=True,
-            help=f"Cálculo: {cantidad_unidades} × {datos_producto['factor']} = {total_calculado} {unidad_label}"
+            help=f"Cálculo: {cantidad_unidades} × {factor} = {total_calculado} {unidad_label}"
         )
     
     responsable = st.text_input("Responsable del conteo")
@@ -237,10 +248,10 @@ if not df.empty:
     with col_r2:
         st.metric("Total unidades", int(df_filtrado["cantidad_unidades"].sum()))
     with col_r3:
-        total_kg = df_filtrado[df_filtrado["unidad_medida"] == "kg"]["total_kg_lt"].sum()
+        total_kg = df_filtrado[df_filtrado["unidad_medida"] == "kg"]["total_kg_lt"].sum() if "unidad_medida" in df_filtrado.columns else 0
         st.metric("Total KG", f"{total_kg:,.0f}")
     with col_r4:
-        total_lt = df_filtrado[df_filtrado["unidad_medida"] == "lt"]["total_kg_lt"].sum()
+        total_lt = df_filtrado[df_filtrado["unidad_medida"] == "lt"]["total_kg_lt"].sum() if "unidad_medida" in df_filtrado.columns else 0
         st.metric("Total LT", f"{total_lt:,.0f}")
     
     csv = df.to_csv(index=False).encode('utf-8')

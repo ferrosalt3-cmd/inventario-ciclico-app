@@ -3,10 +3,17 @@ import pandas as pd
 import sqlite3
 import json
 import re
+import os
 from datetime import datetime
 
 # Configuración de la página
 st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭")
+
+# --- RESETEAR CATÁLOGO SI ES NECESARIO (quitar después de la primera ejecución) ---
+CATALOGO_PATH = "catalogo_productos.json"
+if os.path.exists(CATALOGO_PATH):
+    os.remove(CATALOGO_PATH)  # Borra el catálogo viejo
+    st.info("🔄 Catálogo actualizado a nueva versión")
 
 # Título principal
 st.title("🏭 Sistema de Inventario Cíclico - Sulfatos")

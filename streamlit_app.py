@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import json
+import re
 from datetime import datetime
 
 # Configuración de la página
@@ -28,27 +29,32 @@ def cargar_catalogo():
             "Sulfato de Magnesio Heptahidratado (PT)": {
                 "codigo": "PT0000000093",
                 "presentacion": "Sacos x 25 kg",
-                "factor_kg": 25
+                "factor": 25,
+                "unidad": "kg"
             },
             "Nitrato de Magnesio Hexahidratado (MRC)": {
                 "codigo": "MRC000000053",
                 "presentacion": "Sacos x 25 kg",
-                "factor_kg": 25
+                "factor": 25,
+                "unidad": "kg"
             },
             "Sulfato Ferroso Tetrahidratado (PT)": {
                 "codigo": "PT0000000117",
                 "presentacion": "Sacos x 25 kg",
-                "factor_kg": 25
+                "factor": 25,
+                "unidad": "kg"
             },
             "Sulfato de Potasio (MRC)": {
                 "codigo": "MRC000000019",
                 "presentacion": "Sacos x 25 kg",
-                "factor_kg": 25
+                "factor": 25,
+                "unidad": "kg"
             },
             "Sulfato Feroso Heptahidratado C/C (PT)": {
                 "codigo": "PT000000130",
                 "presentacion": "Sacos x 25 kg",
-                "factor_kg": 25
+                "factor": 25,
+                "unidad": "kg"
             }
         }
         guardar_catalogo(catalogo_default)
@@ -76,7 +82,8 @@ def init_db():
             clasificacion TEXT,
             presentacion TEXT,
             cantidad_unidades INTEGER,
-            total_kg REAL,
+            total_kg_lt REAL,
+            unidad_medida TEXT,
             almacen TEXT,
             responsable TEXT,
             observaciones TEXT,
@@ -92,12 +99,14 @@ def guardar_registro(datos):
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO inventario 
-        (fecha_hora, codigo, producto, clasificacion, presentacion, cantidad_unidades, total_kg, almacen, responsable, observaciones)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (fecha_hora, codigo, producto, clasificacion, presentacion, cantidad_unidades, 
+         total_kg_lt, unidad_medida, almacen, responsable, observaciones)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         datos['fecha_hora'], datos['codigo'], datos['producto'], 
         datos['clasificacion'], datos['presentacion'], datos['cantidad_unidades'],
-        datos['total_kg'], datos['almacen'], datos['responsable'], datos['observaciones']
+        datos['total_kg_lt'], datos['unidad_medida'], datos['almacen'], 
+        datos['responsable'], datos['observaciones']
     ))
     conn.commit()
     conn.close()
@@ -116,60 +125,57 @@ init_db()
 ALMACENES = ["Almacén A", "Almacén D", "Almacén E", "Almacén F", "Almacén G"]
 CLASIFICACIONES = ["Producto Terminado", "Mercadería"]
 
-# --- TRUCO PARA ACTUALIZACIÓN VISUAL ---
-if 'producto_seleccionado' not in st.session_state:
-    st.session_state.producto_seleccionado = list(CATALOGO_PRODUCTOS.keys())[0]
-
 # --- SECCIÓN 1: AGREGAR PRODUCTO ---
 st.header("➕ Registrar nuevo conteo")
 
-# Callback para actualizar visualmente
-def on_product_change():
-    st.session_state.producto_seleccionado = st.session_state.producto_dropdown
+# Selectbox FUERA del formulario para que actualice visualmente
+producto_desc = st.selectbox(
+    "Selecciona el producto", 
+    options=list(CATALOGO_PRODUCTOS.keys()),
+    key="producto_selector"
+)
 
+# Obtener datos del producto seleccionado (esto actualiza automáticamente)
+datos_producto = CATALOGO_PRODUCTOS[producto_desc]
+es_kg = datos_producto["unidad"] == "kg"
+unidad_label = "kg" if es_kg else "lt"
+
+# Mostrar datos del producto seleccionado (actualización visual)
+col_info1, col_info2, col_info3 = st.columns(3)
+with col_info1:
+    st.text_input("Código", value=datos_producto["codigo"], disabled=True, key="display_codigo")
+with col_info2:
+    st.text_input("Presentación", value=datos_producto["presentacion"], disabled=True, key="display_presentacion")
+with col_info3:
+    st.text_input("Unidad", value=unidad_label.upper(), disabled=True, key="display_unidad")
+
+st.divider()
+
+# Formulario para el resto de datos
 with st.form("formulario_inventario"):
     
-    # Selección de producto con callback
-    producto_desc = st.selectbox(
-        "Selecciona el producto", 
-        options=list(CATALOGO_PRODUCTOS.keys()),
-        key="producto_dropdown",
-        on_change=on_product_change
-    )
-    
-    # Obtener datos del producto seleccionado
-    datos_producto = CATALOGO_PRODUCTOS[producto_desc]
-    
-    # Datos que se autocompletan (usamos st.session_state para forzar actualización)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.text_input("Código", value=datos_producto["codigo"], disabled=True)
-    with col2:
-        st.text_input("Presentación", value=datos_producto["presentacion"], disabled=True)
-    
-    # Clasificación y Almacén
     col3, col4 = st.columns(2)
     with col3:
         clasificacion = st.selectbox("Clasificación", CLASIFICACIONES)
     with col4:
         almacen = st.selectbox("Almacén", ALMACENES)
     
-    # Cantidad de unidades y cálculo automático de kg
+    # Cantidad de unidades y cálculo automático
     col5, col6 = st.columns(2)
     with col5:
         cantidad_unidades = st.number_input(
-            "Cantidad de unidades contadas", 
+            f"Cantidad de unidades contadas", 
             min_value=0, 
             value=0,
             help="Número de sacos, bidones, etc."
         )
     with col6:
-        total_kg = cantidad_unidades * datos_producto["factor_kg"]
+        total_calculado = cantidad_unidades * datos_producto["factor"]
         st.number_input(
-            "Total kg (automático)", 
-            value=float(total_kg), 
+            f"Total {unidad_label}", 
+            value=float(total_calculado), 
             disabled=True,
-            help="Cálculo: unidades × factor de presentación"
+            help=f"Cálculo: {cantidad_unidades} × {datos_producto['factor']} = {total_calculado} {unidad_label}"
         )
     
     responsable = st.text_input("Responsable del conteo")
@@ -186,13 +192,15 @@ if guardar:
         'clasificacion': clasificacion,
         'presentacion': datos_producto["presentacion"],
         'cantidad_unidades': cantidad_unidades,
-        'total_kg': total_kg,
+        'total_kg_lt': total_calculado,
+        'unidad_medida': unidad_label,
         'almacen': almacen,
         'responsable': responsable,
         'observaciones': observaciones
     }
     guardar_registro(datos)
-    st.success(f"✅ Guardado: {producto_desc} | {cantidad_unidades} unidades = {total_kg} kg")
+    st.success(f"✅ Guardado: {producto_desc} | {cantidad_unidades} unidades = {total_calculado} {unidad_label}")
+    st.balloons()
 
 # --- SECCIÓN 2: MOSTRAR INVENTARIO ---
 st.header("📋 Historial de inventario")
@@ -222,9 +230,11 @@ if not df.empty:
     with col_r2:
         st.metric("Total unidades", int(df_filtrado["cantidad_unidades"].sum()))
     with col_r3:
-        st.metric("Total kg", f"{df_filtrado['total_kg'].sum():,.0f}")
+        total_kg = df_filtrado[df_filtrado["unidad_medida"] == "kg"]["total_kg_lt"].sum()
+        st.metric("Total KG", f"{total_kg:,.0f}")
     with col_r4:
-        st.metric("Productos únicos", df_filtrado["producto"].nunique())
+        total_lt = df_filtrado[df_filtrado["unidad_medida"] == "lt"]["total_kg_lt"].sum()
+        st.metric("Total LT", f"{total_lt:,.0f}")
     
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(
@@ -242,26 +252,27 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
     
     with st.form("nuevo_producto"):
         st.subheader("Nuevo Producto")
-        nuevo_nombre = st.text_input("Descripción del producto")
-        nuevo_codigo = st.text_input("Código")
+        nuevo_nombre = st.text_input("Descripción del producto *")
+        nuevo_codigo = st.text_input("Código *")
         
         col_np1, col_np2 = st.columns(2)
         with col_np1:
             nueva_presentacion = st.selectbox(
                 "Presentación",
-                ["Sacos x 25 kg", "Bidones x 20 Lt", "Bigbag x 1000 kg", 
-                 "Botella x 1 Lt", "Bidón x 35 kg", "Balde x 25 kg", 
+                ["Sacos x 25 kg", "Bidones x 20 lt", "Bigbag x 1000 kg", 
+                 "Botella x 1 lt", "Bidón x 35 kg", "Balde x 25 kg", 
                  "Bigbag x 1250 kg", "Otra"]
             )
         with col_np2:
-            if nueva_presentacion == "Otra":
-                factor_kg = st.number_input("Factor de conversión a kg", min_value=0.1, value=1.0)
-            else:
-                # Extraer número de la presentación (ej: "25" de "Sacos x 25 kg")
-                import re
-                numeros = re.findall(r'(\d+)', nueva_presentacion)
-                factor_kg = float(numeros[0]) if numeros else 1.0
-                st.number_input("Factor kg (automático)", value=factor_kg, disabled=True)
+            nueva_unidad = st.selectbox("Unidad de medida", ["kg", "lt"])
+        
+        # Calcular factor automáticamente
+        if nueva_presentacion == "Otra":
+            factor = st.number_input("Cantidad por unidad", min_value=0.1, value=1.0)
+        else:
+            numeros = re.findall(r'(\d+)', nueva_presentacion)
+            factor = float(numeros[0]) if numeros else 1.0
+            st.number_input("Cantidad por unidad (automático)", value=factor, disabled=True)
         
         agregar = st.form_submit_button("Agregar al catálogo")
     
@@ -270,7 +281,8 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
             CATALOGO_PRODUCTOS[nuevo_nombre] = {
                 "codigo": nuevo_codigo,
                 "presentacion": nueva_presentacion,
-                "factor_kg": factor_kg
+                "factor": factor,
+                "unidad": nueva_unidad
             }
             guardar_catalogo(CATALOGO_PRODUCTOS)
             st.success(f"✅ Producto '{nuevo_nombre}' agregado. Recarga la página para verlo en el dropdown.")

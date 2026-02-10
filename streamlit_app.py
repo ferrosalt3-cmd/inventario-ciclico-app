@@ -26,12 +26,10 @@ def cargar_catalogo():
             necesita_actualizar = False
             for nombre, datos in catalogo.items():
                 if "unidad" not in datos:
-                    # Determinar unidad basado en la presentación
                     if "lt" in datos["presentacion"].lower():
                         datos["unidad"] = "lt"
                     else:
                         datos["unidad"] = "kg"
-                    # Renombrar factor_kg a factor si existe
                     if "factor_kg" in datos and "factor" not in datos:
                         datos["factor"] = datos["factor_kg"]
                     necesita_actualizar = True
@@ -42,7 +40,6 @@ def cargar_catalogo():
             return catalogo
             
     except FileNotFoundError:
-        # Catálogo inicial con tus 5 productos
         catalogo_default = {
             "Sulfato de Magnesio Heptahidratado (PT)": {
                 "codigo": "PT0000000093",
@@ -91,6 +88,8 @@ def init_db():
     """Crea la base de datos si no existe"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    
+    # Crear tabla nueva si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS inventario (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,6 +107,47 @@ def init_db():
             estado TEXT DEFAULT 'Pendiente'
         )
     ''')
+    
+    # Verificar si hay tabla vieja con estructura diferente
+    cursor.execute("PRAGMA table_info(inventario)")
+    columnas = [col[1] for col in cursor.fetchall()]
+    
+    # Si existe columna vieja 'cantidad', renombrar/migrar
+    if 'cantidad' in columnas and 'cantidad_unidades' not in columnas:
+        st.info("🔄 Migrando base de datos a nueva estructura...")
+        # Renombrar tabla
+        cursor.execute("ALTER TABLE inventario RENAME TO inventario_old")
+        # Crear nueva tabla
+        cursor.execute('''
+            CREATE TABLE inventario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha_hora TEXT,
+                codigo TEXT,
+                producto TEXT,
+                clasificacion TEXT,
+                presentacion TEXT,
+                cantidad_unidades INTEGER,
+                total_kg_lt REAL,
+                unidad_medida TEXT,
+                almacen TEXT,
+                responsable TEXT,
+                observaciones TEXT,
+                estado TEXT DEFAULT 'Pendiente'
+            )
+        ''')
+        # Migrar datos
+        cursor.execute('''
+            INSERT INTO inventario (id, fecha_hora, codigo, producto, clasificacion, 
+                                   presentacion, cantidad_unidades, almacen, responsable, 
+                                   observaciones, estado)
+            SELECT id, fecha_hora, codigo, producto, clasificacion, presentacion, 
+                   cantidad, almacen, responsable, observaciones, estado 
+            FROM inventario_old
+        ''')
+        cursor.execute("DROP TABLE inventario_old")
+        conn.commit()
+        st.success("✅ Base de datos migrada correctamente")
+    
     conn.commit()
     conn.close()
 
@@ -146,18 +186,15 @@ CLASIFICACIONES = ["Producto Terminado", "Mercadería"]
 # --- SECCIÓN 1: AGREGAR PRODUCTO ---
 st.header("➕ Registrar nuevo conteo")
 
-# Selectbox FUERA del formulario para que actualice visualmente
 producto_desc = st.selectbox(
     "Selecciona el producto", 
     options=list(CATALOGO_PRODUCTOS.keys()),
     key="producto_selector"
 )
 
-# Obtener datos del producto seleccionado (esto actualiza automáticamente)
 datos_producto = CATALOGO_PRODUCTOS[producto_desc]
-unidad_label = datos_producto.get("unidad", "kg")  # Default a kg si no existe
+unidad_label = datos_producto.get("unidad", "kg")
 
-# Mostrar datos del producto seleccionado (actualización visual)
 col_info1, col_info2, col_info3 = st.columns(3)
 with col_info1:
     st.text_input("Código", value=datos_producto["codigo"], disabled=True, key="display_codigo")
@@ -168,7 +205,6 @@ with col_info3:
 
 st.divider()
 
-# Formulario para el resto de datos
 with st.form("formulario_inventario"):
     
     col3, col4 = st.columns(2)
@@ -177,7 +213,6 @@ with st.form("formulario_inventario"):
     with col4:
         almacen = st.selectbox("Almacén", ALMACENES)
     
-    # Cantidad de unidades y cálculo automático
     col5, col6 = st.columns(2)
     with col5:
         cantidad_unidades = st.number_input(
@@ -201,7 +236,6 @@ with st.form("formulario_inventario"):
     
     guardar = st.form_submit_button("💾 Guardar en base de datos")
 
-# --- PROCESAR GUARDADO ---
 if guardar:
     datos = {
         'fecha_hora': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -226,6 +260,14 @@ st.header("📋 Historial de inventario")
 df = obtener_inventario()
 
 if not df.empty:
+    # Verificar columnas disponibles y adaptar
+    if 'cantidad_unidades' not in df.columns and 'cantidad' in df.columns:
+        df = df.rename(columns={'cantidad': 'cantidad_unidades'})
+    if 'total_kg_lt' not in df.columns:
+        df['total_kg_lt'] = 0
+    if 'unidad_medida' not in df.columns:
+        df['unidad_medida'] = 'kg'
+    
     st.subheader("🔍 Filtros")
     col_f1, col_f2 = st.columns(2)
     with col_f1:
@@ -246,7 +288,8 @@ if not df.empty:
     with col_r1:
         st.metric("Total registros", len(df_filtrado))
     with col_r2:
-        st.metric("Total unidades", int(df_filtrado["cantidad_unidades"].sum()))
+        total_unidades = df_filtrado["cantidad_unidades"].sum() if "cantidad_unidades" in df_filtrado.columns else 0
+        st.metric("Total unidades", int(total_unidades))
     with col_r3:
         total_kg = df_filtrado[df_filtrado["unidad_medida"] == "kg"]["total_kg_lt"].sum() if "unidad_medida" in df_filtrado.columns else 0
         st.metric("Total KG", f"{total_kg:,.0f}")
@@ -284,7 +327,6 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
         with col_np2:
             nueva_unidad = st.selectbox("Unidad de medida", ["kg", "lt"])
         
-        # Calcular factor automáticamente
         if nueva_presentacion == "Otra":
             factor = st.number_input("Cantidad por unidad", min_value=0.1, value=1.0)
         else:
@@ -307,7 +349,6 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
         else:
             st.error("❌ Debes completar nombre y código")
     
-    # Mostrar catálogo actual
     st.subheader("Catálogo actual")
     catalogo_df = pd.DataFrame.from_dict(CATALOGO_PRODUCTOS, orient='index')
     st.dataframe(catalogo_df, use_container_width=True)

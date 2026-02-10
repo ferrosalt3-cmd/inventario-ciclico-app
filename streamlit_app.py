@@ -1,4 +1,4 @@
-import streamlit as st
+import stimport streamlit as st
 import pandas as pd
 from datetime import datetime
 
@@ -83,7 +83,7 @@ if guardar:
     st.session_state.inventario.append(nuevo_registro)
     st.success(f"✅ Registrado: {codigo} - {producto} ({cantidad} unidades)")
 
-# Mostrar tabla
+# Mostrar tabla solo si hay datos
 if st.session_state.inventario:
     df = pd.DataFrame(st.session_state.inventario)
     
@@ -104,15 +104,16 @@ if st.session_state.inventario:
     
     st.dataframe(df_filtrado, use_container_width=True)
     
-    # Estadísticas rápidas
-    st.subheader("📊 Resumen")
-    col_r1, col_r2, col_r3 = st.columns(3)
-    with col_r1:
-        st.metric("Total registros", len(df_filtrado))
-    with col_r2:
-        st.metric("Total unidades", int(df_filtrado["Cantidad"].sum()))
-    with col_r3:
-        st.metric("Productos únicos", df_filtrado["Código"].nunique())
+    # Estadísticas rápidas (solo si hay datos después de filtrar)
+    if not df_filtrado.empty:
+        st.subheader("📊 Resumen")
+        col_r1, col_r2, col_r3 = st.columns(3)
+        with col_r1:
+            st.metric("Total registros", len(df_filtrado))
+        with col_r2:
+            st.metric("Total unidades", int(df_filtrado["Cantidad"].sum()))
+        with col_r3:
+            st.metric("Productos únicos", df_filtrado["Código"].nunique())
     
     # Descargar
     csv = df.to_csv(index=False).encode('utf-8')

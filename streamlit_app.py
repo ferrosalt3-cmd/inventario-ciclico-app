@@ -181,11 +181,21 @@ st.header("➕ Registrar nuevo conteo")
 # FILTRO POR LÍNEA
 st.subheader("Paso 1: Selecciona la línea de producción")
 
+# Calcular índice correctamente
+opciones_linea = ["Todas"] + LINEAS
+if st.session_state.linea_filtro == "Todas":
+    index_linea = 0
+else:
+    try:
+        index_linea = opciones_linea.index(st.session_state.linea_filtro)
+    except ValueError:
+        index_linea = 0
+
 linea_anterior = st.session_state.linea_filtro
 linea_seleccionada = st.selectbox(
     "Línea",
-    options=["Todas"] + LINEAS,
-    index=["Todas"] + LINEAS.index(st.session_state.linea_filtro) + 1 if st.session_state.linea_filtro != "Todas" else 0,
+    options=opciones_linea,
+    index=index_linea,
     key="linea_select"
 )
 

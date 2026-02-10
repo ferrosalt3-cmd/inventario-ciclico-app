@@ -171,8 +171,6 @@ st.header("➕ Registrar nuevo conteo")
 # Inicializar session state
 if 'linea_filtro' not in st.session_state:
     st.session_state.linea_filtro = "Todas"
-if 'cantidad_input' not in st.session_state:
-    st.session_state.cantidad_input = 0
 
 # FILTRO POR LÍNEA - FUERA DE FORM
 st.subheader("Paso 1: Selecciona la línea de producción")
@@ -226,13 +224,17 @@ st.text_input("Unidad de medida", value=unidad_label.upper(), disabled=True, key
 # ENTRADA DE CANTIDAD - FUERA DE FORM PARA ACTUALIZACIÓN EN TIEMPO REAL
 st.subheader("Paso 3: Ingresa los datos del conteo")
 
+# Usar un key único que cambie cuando se guarda para resetear
+if 'cantidad_key' not in st.session_state:
+    st.session_state.cantidad_key = 0
+
 col_cant, col_total = st.columns(2)
 with col_cant:
     cantidad_unidades = st.number_input(
         "Cantidad de unidades contadas *", 
         min_value=0, 
-        value=st.session_state.cantidad_input,
-        key="cantidad_input"
+        value=0,
+        key=f"cantidad_input_{st.session_state.cantidad_key}"
     )
 
 with col_total:
@@ -280,8 +282,8 @@ if guardar:
         }
         guardar_registro(datos)
         st.success(f"✅ Guardado: {producto_desc} | {cantidad_unidades} unidades = {total_calculado} {unidad_label}")
-        # Resetear cantidad
-        st.session_state.cantidad_input = 0
+        # Incrementar key para forzar reset del campo cantidad
+        st.session_state.cantidad_key += 1
         st.rerun()
 
 st.divider()

@@ -172,8 +172,6 @@ if 'producto_sel' not in st.session_state:
     st.session_state.producto_sel = list(CATALOGO_PRODUCTOS.keys())[0]
 if 'cantidad_val' not in st.session_state:
     st.session_state.cantidad_val = 0
-if 'recien_guardado' not in st.session_state:
-    st.session_state.recien_guardado = False
 
 # --- SECCIÓN 1: AGREGAR PRODUCTO ---
 st.header("➕ Registrar nuevo conteo")
@@ -181,7 +179,6 @@ st.header("➕ Registrar nuevo conteo")
 # FILTRO POR LÍNEA
 st.subheader("Paso 1: Selecciona la línea de producción")
 
-# Calcular índice correctamente
 opciones_linea = ["Todas"] + LINEAS
 if st.session_state.linea_filtro == "Todas":
     index_linea = 0
@@ -199,10 +196,9 @@ linea_seleccionada = st.selectbox(
     key="linea_select"
 )
 
-# Si cambió la línea, actualizar y rerun
+# Si cambió la línea, actualizar
 if linea_seleccionada != linea_anterior:
     st.session_state.linea_filtro = linea_seleccionada
-    # Seleccionar primer producto de la nueva línea
     if linea_seleccionada == "Todas":
         st.session_state.producto_sel = list(CATALOGO_PRODUCTOS.keys())[0]
     else:
@@ -240,39 +236,21 @@ producto_desc = st.selectbox(
     key="producto_select"
 )
 
-# Si cambió el producto, actualizar y rerun
+# Si cambió el producto, actualizar
 if producto_desc != producto_anterior:
     st.session_state.producto_sel = producto_desc
-    st.session_state.cantidad_val = 0  # Resetear cantidad
+    st.session_state.cantidad_val = 0
     st.rerun()
 
-# OBTENER DATOS DEL PRODUCTO SELECCIONADO
+# OBTENER DATOS DEL PRODUCTO (INTERNO, NO SE MUESTRA)
 datos_producto = CATALOGO_PRODUCTOS[st.session_state.producto_sel]
 unidad_label = datos_producto.get("unidad", "kg")
 clasificacion_auto = datos_producto.get("clasificacion", "")
 linea_auto = datos_producto.get("linea", "")
 factor = datos_producto.get("factor", 1)
 
-# MOSTRAR INFORMACIÓN DEL PRODUCTO
-st.subheader("📋 Información del producto:")
-
-col_info1, col_info2 = st.columns(2)
-with col_info1:
-    st.text_input("Código", value=datos_producto["codigo"], disabled=True, key="info_codigo")
-    st.text_input("Clasificación", value=clasificacion_auto, disabled=True, key="info_clasif")
-with col_info2:
-    st.text_input("Presentación", value=datos_producto["presentacion"], disabled=True, key="info_pres")
-    st.text_input("Línea", value=linea_auto, disabled=True, key="info_linea")
-
-st.text_input("Unidad de medida", value=unidad_label.upper(), disabled=True, key="info_unidad")
-
 # ENTRADA DE CANTIDAD Y TOTAL
 st.subheader("Paso 3: Ingresa los datos del conteo")
-
-# Si acaba de guardar, mostrar mensaje y resetear flag
-if st.session_state.recien_guardado:
-    st.success("✅ Registro guardado exitosamente")
-    st.session_state.recien_guardado = False
 
 col_cant, col_total = st.columns(2)
 with col_cant:
@@ -282,7 +260,6 @@ with col_cant:
         value=st.session_state.cantidad_val,
         key="cantidad_input"
     )
-    # Actualizar valor en session state
     st.session_state.cantidad_val = cantidad_unidades
 
 with col_total:
@@ -326,8 +303,8 @@ if guardar:
             'observaciones': observaciones
         }
         guardar_registro(datos)
+        st.success(f"✅ Guardado: {st.session_state.producto_sel} | {cantidad_unidades} unidades = {total_calculado} {unidad_label}")
         st.session_state.cantidad_val = 0
-        st.session_state.recien_guardado = True
         st.rerun()
 
 st.divider()
@@ -390,42 +367,8 @@ else:
 with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
     st.write("Aquí puedes agregar productos nuevos sin editar el código:")
     
-    # SECCIÓN 1: SELECCIONAR PRESENTACIÓN (FUERA DE FORM)
-    st.subheader("Paso 1: Configurar presentación")
-    
-    presentacion_opciones = [
-        "Sacos x 25 kg", "Bidones x 20 lt", "Bidón x 20 lt", "Bidón x 35 lt", 
-        "Botella x 1 lt", "Bigbag x 1000 kg", "Bigbag x 1250 kg", 
-        "Balde x 25 kg", "Otra"
-    ]
-    
-    pres_seleccionada = st.selectbox(
-        "Presentación *",
-        options=presentacion_opciones,
-        key="admin_presentacion_sel"
-    )
-    
-    # Calcular factor y sugerir unidad
-    if pres_seleccionada == "Otra":
-        factor_admin = st.number_input("Cantidad por unidad *", min_value=0.1, value=1.0, key="admin_factor_manual")
-        unidad_sugerida = "kg"
-    else:
-        numeros = re.findall(r'(\d+)', pres_seleccionada)
-        factor_admin = float(numeros[0]) if numeros else 1.0
-        st.number_input("Cantidad por unidad (automático)", value=factor_admin, disabled=True, key="admin_factor_auto")
-        
-        # Sugerir unidad basada en presentación
-        if "lt" in pres_seleccionada.lower():
-            unidad_sugerida = "lt"
-        else:
-            unidad_sugerida = "kg"
-    
-    # Mostrar unidad sugerida
-    st.info(f"Unidad sugerida: **{unidad_sugerida.upper()}** (puedes cambiarla abajo si es necesario)")
-    
-    # FORMULARIO PARA DATOS RESTANTES
     with st.form("form_nuevo_producto"):
-        st.subheader("Paso 2: Completar información")
+        st.subheader("Nuevo Producto")
         
         nuevo_nombre = st.text_input("Descripción del producto *", key="admin_nombre")
         nuevo_codigo = st.text_input("Código *", key="admin_codigo")
@@ -436,22 +379,24 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
         with col_np2:
             nueva_linea = st.selectbox("Línea *", LINEAS, key="admin_linea")
         
-        # Permitir cambiar unidad si es necesario
-        nueva_unidad = st.selectbox(
-            "Unidad de medida *", 
-            ["kg", "lt"], 
-            index=0 if unidad_sugerida == "kg" else 1,
-            key="admin_unidad_sel"
-        )
+        col_np3, col_np4 = st.columns(2)
+        with col_np3:
+            nueva_presentacion = st.selectbox(
+                "Presentación *",
+                ["Sacos x 25 kg", "Bidones x 20 lt", "Bidón x 20 lt", "Bidón x 35 lt", 
+                 "Botella x 1 lt", "Bigbag x 1000 kg", "Bigbag x 1250 kg", 
+                 "Balde x 25 kg", "Otra"],
+                key="admin_presentacion"
+            )
+        with col_np4:
+            nueva_unidad = st.selectbox("Unidad de medida *", ["kg", "lt"], key="admin_unidad")
         
-        # Verificar consistencia
-        if pres_seleccionada != "Otra":
-            tiene_lt = "lt" in pres_seleccionada.lower()
-            tiene_kg = "kg" in pres_seleccionada.lower()
-            if tiene_lt and nueva_unidad != "lt":
-                st.warning("⚠️ La presentación indica 'lt' pero seleccionaste unidad 'kg'")
-            elif tiene_kg and nueva_unidad != "kg":
-                st.warning("⚠️ La presentación indica 'kg' pero seleccionaste unidad 'lt'")
+        # Calcular factor internamente según presentación
+        if nueva_presentacion == "Otra":
+            factor_nuevo = st.number_input("Cantidad por unidad *", min_value=0.1, value=1.0, key="admin_factor_manual")
+        else:
+            numeros = re.findall(r'(\d+)', nueva_presentacion)
+            factor_nuevo = float(numeros[0]) if numeros else 1.0
         
         agregar = st.form_submit_button("Agregar al catálogo")
     
@@ -459,8 +404,8 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
         if nuevo_nombre and nuevo_codigo:
             CATALOGO_PRODUCTOS[nuevo_nombre] = {
                 "codigo": nuevo_codigo,
-                "presentacion": pres_seleccionada,
-                "factor": factor_admin,
+                "presentacion": nueva_presentacion,
+                "factor": factor_nuevo,
                 "unidad": nueva_unidad,
                 "clasificacion": nueva_clasificacion,
                 "linea": nueva_linea

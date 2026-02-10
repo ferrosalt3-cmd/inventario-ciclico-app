@@ -165,50 +165,85 @@ ALMACENES = [
     "Almacén 13 (Sullana)", "Almacén 3 (Ica)", "Ferrofert (Paita)"
 ]
 
+# --- INICIALIZAR SESSION STATE ---
+if 'linea_filtro' not in st.session_state:
+    st.session_state.linea_filtro = "Todas"
+if 'producto_sel' not in st.session_state:
+    st.session_state.producto_sel = list(CATALOGO_PRODUCTOS.keys())[0]
+if 'cantidad_val' not in st.session_state:
+    st.session_state.cantidad_val = 0
+if 'recien_guardado' not in st.session_state:
+    st.session_state.recien_guardado = False
+
 # --- SECCIÓN 1: AGREGAR PRODUCTO ---
 st.header("➕ Registrar nuevo conteo")
 
-# Inicializar session state
-if 'linea_filtro' not in st.session_state:
-    st.session_state.linea_filtro = "Todas"
-
-# FILTRO POR LÍNEA - FUERA DE FORM
+# FILTRO POR LÍNEA
 st.subheader("Paso 1: Selecciona la línea de producción")
+
+linea_anterior = st.session_state.linea_filtro
 linea_seleccionada = st.selectbox(
     "Línea",
     options=["Todas"] + LINEAS,
-    key="linea_filtro"
+    index=["Todas"] + LINEAS.index(st.session_state.linea_filtro) + 1 if st.session_state.linea_filtro != "Todas" else 0,
+    key="linea_select"
 )
 
+# Si cambió la línea, actualizar y rerun
+if linea_seleccionada != linea_anterior:
+    st.session_state.linea_filtro = linea_seleccionada
+    # Seleccionar primer producto de la nueva línea
+    if linea_seleccionada == "Todas":
+        st.session_state.producto_sel = list(CATALOGO_PRODUCTOS.keys())[0]
+    else:
+        productos_linea = [n for n, d in CATALOGO_PRODUCTOS.items() if d.get("linea") == linea_seleccionada]
+        if productos_linea:
+            st.session_state.producto_sel = productos_linea[0]
+    st.rerun()
+
 # Filtrar productos por línea
-if linea_seleccionada == "Todas":
+if st.session_state.linea_filtro == "Todas":
     productos_filtrados = list(CATALOGO_PRODUCTOS.keys())
 else:
     productos_filtrados = [
         nombre for nombre, datos in CATALOGO_PRODUCTOS.items() 
-        if datos.get("linea") == linea_seleccionada
+        if datos.get("linea") == st.session_state.linea_filtro
     ]
 
 if not productos_filtrados:
-    st.warning(f"No hay productos en la línea '{linea_seleccionada}'")
+    st.warning(f"No hay productos en la línea '{st.session_state.linea_filtro}'")
     st.stop()
 
-# SELECCIONAR PRODUCTO - FUERA DE FORM
+# SELECCIONAR PRODUCTO
 st.subheader("Paso 2: Selecciona el producto")
+
+producto_anterior = st.session_state.producto_sel
+try:
+    index_producto = productos_filtrados.index(st.session_state.producto_sel)
+except ValueError:
+    index_producto = 0
+
 producto_desc = st.selectbox(
     "Producto", 
     options=productos_filtrados,
-    key="producto_seleccionado"
+    index=index_producto,
+    key="producto_select"
 )
 
+# Si cambió el producto, actualizar y rerun
+if producto_desc != producto_anterior:
+    st.session_state.producto_sel = producto_desc
+    st.session_state.cantidad_val = 0  # Resetear cantidad
+    st.rerun()
+
 # OBTENER DATOS DEL PRODUCTO SELECCIONADO
-datos_producto = CATALOGO_PRODUCTOS[producto_desc]
+datos_producto = CATALOGO_PRODUCTOS[st.session_state.producto_sel]
 unidad_label = datos_producto.get("unidad", "kg")
 clasificacion_auto = datos_producto.get("clasificacion", "")
 linea_auto = datos_producto.get("linea", "")
 factor = datos_producto.get("factor", 1)
 
-# MOSTRAR INFORMACIÓN DEL PRODUCTO (ACTUALIZACIÓN EN TIEMPO REAL)
+# MOSTRAR INFORMACIÓN DEL PRODUCTO
 st.subheader("📋 Información del producto:")
 
 col_info1, col_info2 = st.columns(2)
@@ -221,30 +256,30 @@ with col_info2:
 
 st.text_input("Unidad de medida", value=unidad_label.upper(), disabled=True, key="info_unidad")
 
-# ENTRADA DE CANTIDAD - FUERA DE FORM PARA ACTUALIZACIÓN EN TIEMPO REAL
+# ENTRADA DE CANTIDAD Y TOTAL
 st.subheader("Paso 3: Ingresa los datos del conteo")
 
-# Usar un key único que cambie cuando se guarda para resetear
-if 'cantidad_key' not in st.session_state:
-    st.session_state.cantidad_key = 0
+# Si acaba de guardar, mostrar mensaje y resetear flag
+if st.session_state.recien_guardado:
+    st.success("✅ Registro guardado exitosamente")
+    st.session_state.recien_guardado = False
 
 col_cant, col_total = st.columns(2)
 with col_cant:
     cantidad_unidades = st.number_input(
         "Cantidad de unidades contadas *", 
         min_value=0, 
-        value=0,
-        key=f"cantidad_input_{st.session_state.cantidad_key}"
+        value=st.session_state.cantidad_val,
+        key="cantidad_input"
     )
+    # Actualizar valor en session state
+    st.session_state.cantidad_val = cantidad_unidades
 
 with col_total:
     total_calculado = cantidad_unidades * factor
-    st.number_input(
-        f"Total {unidad_label} (automático)", 
-        value=float(total_calculado), 
-        disabled=True,
-        key="total_calculado",
-        help=f"Cálculo: {cantidad_unidades} × {factor} = {total_calculado} {unidad_label}"
+    st.metric(
+        label=f"Total {unidad_label}",
+        value=f"{total_calculado:,.0f}"
     )
 
 # FORMULARIO PARA LOS DATOS RESTANTES
@@ -269,7 +304,7 @@ if guardar:
         datos = {
             'fecha_hora': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'codigo': datos_producto["codigo"],
-            'producto': producto_desc,
+            'producto': st.session_state.producto_sel,
             'clasificacion': clasificacion_auto,
             'linea': linea_auto,
             'presentacion': datos_producto["presentacion"],
@@ -281,9 +316,8 @@ if guardar:
             'observaciones': observaciones
         }
         guardar_registro(datos)
-        st.success(f"✅ Guardado: {producto_desc} | {cantidad_unidades} unidades = {total_calculado} {unidad_label}")
-        # Incrementar key para forzar reset del campo cantidad
-        st.session_state.cantidad_key += 1
+        st.session_state.cantidad_val = 0
+        st.session_state.recien_guardado = True
         st.rerun()
 
 st.divider()

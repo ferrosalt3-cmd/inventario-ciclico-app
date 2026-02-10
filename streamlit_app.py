@@ -16,12 +16,6 @@ st.write("Registro de inventario con base de datos permanente")
 DB_PATH = "inventario.db"
 CATALOGO_PATH = "catalogo_productos.json"
 
-# --- RESETEAR BASE DE DATOS (desarrollo) ---
-if os.path.exists(DB_PATH):
-    os.remove(DB_PATH)
-if os.path.exists(CATALOGO_PATH):
-    os.remove(CATALOGO_PATH)
-
 # --- LÍNEAS DISPONIBLES ---
 LINEAS = [
     "Magnesio", "Magnesio Suelo", "Fierro", "Nitrato de Magnesio", 
@@ -50,7 +44,6 @@ def cargar_catalogo():
                 guardar_catalogo(catalogo)
             return catalogo
     except FileNotFoundError:
-        # Catálogo inicial con tus 5 productos + Sulcopenta
         catalogo_default = {
             "Sulfato de Magnesio Heptahidratado (PT)": {
                 "codigo": "PT0000000093",
@@ -175,84 +168,115 @@ ALMACENES = [
 # --- SECCIÓN 1: AGREGAR PRODUCTO ---
 st.header("➕ Registrar nuevo conteo")
 
-# FILTRO POR LÍNEA PRIMERO
+# FILTRO POR LÍNEA - FUERA DEL FORMULARIO PARA ACTUALIZACIÓN EN TIEMPO REAL
 st.subheader("Paso 1: Selecciona la línea de producción")
+
+# Inicializar session state si no existe
+if 'linea_sel' not in st.session_state:
+    st.session_state.linea_sel = "Todas"
+if 'producto_sel' not in st.session_state:
+    st.session_state.producto_sel = list(CATALOGO_PRODUCTOS.keys())[0]
+if 'cantidad_temp' not in st.session_state:
+    st.session_state.cantidad_temp = 0
+
+def on_linea_change():
+    st.session_state.linea_sel = st.session_state.linea_dropdown
+    # Resetear producto cuando cambia la línea
+    if st.session_state.linea_sel == "Todas":
+        productos_disp = list(CATALOGO_PRODUCTOS.keys())
+    else:
+        productos_disp = [n for n, d in CATALOGO_PRODUCTOS.items() if d.get("linea") == st.session_state.linea_sel]
+    if productos_disp:
+        st.session_state.producto_sel = productos_disp[0]
+
 linea_seleccionada = st.selectbox(
     "Línea",
     options=["Todas"] + LINEAS,
-    key="filtro_linea"
+    key="linea_dropdown",
+    on_change=on_linea_change
 )
 
-# Filtrar productos por línea
-if linea_seleccionada == "Todas":
+# Filtrar productos por línea seleccionada
+if st.session_state.linea_sel == "Todas":
     productos_filtrados = list(CATALOGO_PRODUCTOS.keys())
 else:
     productos_filtrados = [
         nombre for nombre, datos in CATALOGO_PRODUCTOS.items() 
-        if datos.get("linea") == linea_seleccionada
+        if datos.get("linea") == st.session_state.linea_sel
     ]
 
 if not productos_filtrados:
-    st.warning(f"No hay productos en la línea '{linea_seleccionada}'")
+    st.warning(f"No hay productos en la línea '{st.session_state.linea_sel}'")
     st.stop()
 
-# SELECCIONAR PRODUCTO FILTRADO
+# SELECCIONAR PRODUCTO - TAMBIÉN FUERA DEL FORMULARIO
 st.subheader("Paso 2: Selecciona el producto")
+
+def on_producto_change():
+    st.session_state.producto_sel = st.session_state.producto_dropdown
+    st.session_state.cantidad_temp = 0  # Resetear cantidad al cambiar producto
+
 producto_desc = st.selectbox(
     "Producto", 
     options=productos_filtrados,
-    key="producto_selector"
+    key="producto_dropdown",
+    on_change=on_producto_change
 )
 
-# Obtener datos actualizados
+# OBTENER DATOS DEL PRODUCTO SELECCIONADO
 datos_producto = CATALOGO_PRODUCTOS[producto_desc]
 unidad_label = datos_producto.get("unidad", "kg")
 clasificacion_auto = datos_producto.get("clasificacion", "")
 linea_auto = datos_producto.get("linea", "")
+factor = datos_producto.get("factor", 1)
 
-# Mostrar datos del producto seleccionado
+# MOSTRAR INFORMACIÓN DEL PRODUCTO (ACTUALIZACIÓN EN TIEMPO REAL)
 st.subheader("📋 Información del producto:")
+
 col_info1, col_info2 = st.columns(2)
 with col_info1:
-    st.text_input("Código", value=datos_producto["codigo"], disabled=True, key="disp_codigo")
-    st.text_input("Clasificación", value=clasificacion_auto, disabled=True, key="disp_clasif")
+    st.text_input("Código", value=datos_producto["codigo"], disabled=True, key="info_codigo")
+    st.text_input("Clasificación", value=clasificacion_auto, disabled=True, key="info_clasif")
 with col_info2:
-    st.text_input("Presentación", value=datos_producto["presentacion"], disabled=True, key="disp_pres")
-    st.text_input("Línea", value=linea_auto, disabled=True, key="disp_linea")
+    st.text_input("Presentación", value=datos_producto["presentacion"], disabled=True, key="info_pres")
+    st.text_input("Línea", value=linea_auto, disabled=True, key="info_linea")
 
-st.text_input("Unidad de medida", value=unidad_label.upper(), disabled=True, key="disp_unidad")
+st.text_input("Unidad de medida", value=unidad_label.upper(), disabled=True, key="info_unidad")
 
 st.divider()
 
+# FORMULARIO PARA INGRESO DE DATOS
 with st.form("formulario_inventario"):
     
     col1, col2 = st.columns(2)
     with col1:
-        almacen = st.selectbox("Almacén", ALMACENES, key="sel_almacen")
+        almacen = st.selectbox("Almacén", ALMACENES, key="form_almacen")
     with col2:
-        responsable = st.text_input("Responsable del conteo *", key="inp_responsable")
+        responsable = st.text_input("Responsable del conteo *", key="form_responsable")
     
+    # Cantidad con valor temporal en session_state
     col3, col4 = st.columns(2)
     with col3:
         cantidad_unidades = st.number_input(
             "Cantidad de unidades contadas *", 
             min_value=0, 
-            value=0,
-            key="inp_cantidad",
-            help="Número de sacos, bidones, etc."
+            value=st.session_state.cantidad_temp,
+            key="form_cantidad"
         )
+        # Actualizar session state
+        st.session_state.cantidad_temp = cantidad_unidades
+    
     with col4:
-        factor = datos_producto.get("factor", 1)
         total_calculado = cantidad_unidades * factor
         st.number_input(
             f"Total {unidad_label} (automático)", 
             value=float(total_calculado), 
             disabled=True,
-            key="disp_total",
+            key="form_total",
             help=f"Cálculo: {cantidad_unidades} × {factor} = {total_calculado} {unidad_label}"
         )
     
-    observaciones = st.text_input("Observaciones (opcional)", key="inp_obs")
+    observaciones = st.text_input("Observaciones (opcional)", key="form_obs")
     
     st.caption("Los campos con * son obligatorios")
     guardar = st.form_submit_button("💾 Guardar en base de datos")
@@ -279,6 +303,8 @@ if guardar:
         }
         guardar_registro(datos)
         st.success(f"✅ Guardado: {producto_desc} | {cantidad_unidades} unidades = {total_calculado} {unidad_label}")
+        # Resetear cantidad después de guardar
+        st.session_state.cantidad_temp = 0
 
 # --- SECCIÓN 2: MOSTRAR INVENTARIO ---
 st.header("📋 Historial de inventario")
@@ -289,11 +315,11 @@ if not df.empty:
     st.subheader("🔍 Filtros")
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
-        filtro_almacen = st.multiselect("Filtrar por Almacén", ALMACENES, key="filtro_alm_hist")
+        filtro_almacen = st.multiselect("Filtrar por Almacén", ALMACENES, key="hist_almacen")
     with col_f2:
-        filtro_clasificacion = st.multiselect("Filtrar por Clasificación", ["Producto Terminado", "Mercadería"], key="filtro_clas_hist")
+        filtro_clasificacion = st.multiselect("Filtrar por Clasificación", ["Producto Terminado", "Mercadería"], key="hist_clasif")
     with col_f3:
-        filtro_linea_hist = st.multiselect("Filtrar por Línea", LINEAS, key="filtro_linea_hist")
+        filtro_linea_hist = st.multiselect("Filtrar por Línea", LINEAS, key="hist_linea")
     
     df_filtrado = df.copy()
     if filtro_almacen:
@@ -303,7 +329,6 @@ if not df.empty:
     if filtro_linea_hist:
         df_filtrado = df_filtrado[df_filtrado["linea"].isin(filtro_linea_hist)]
     
-    # Seleccionar columnas para mostrar
     columnas_mostrar = ['fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion', 
                        'presentacion', 'cantidad_unidades', 'total_kg_lt', 'unidad_medida', 
                        'almacen', 'responsable', 'observaciones']
@@ -339,16 +364,34 @@ else:
 with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
     st.write("Aquí puedes agregar productos nuevos sin editar el código:")
     
+    # Usar session state para actualización en tiempo real de presentación
+    if 'presentacion_sel' not in st.session_state:
+        st.session_state.presentacion_sel = "Sacos x 25 kg"
+    if 'unidad_sel' not in st.session_state:
+        st.session_state.unidad_sel = "kg"
+    
+    def on_presentacion_change():
+        st.session_state.presentacion_sel = st.session_state.admin_presentacion
+        # Actualizar unidad automáticamente basado en presentación
+        pres = st.session_state.presentacion_sel.lower()
+        if "lt" in pres:
+            st.session_state.unidad_sel = "lt"
+        elif "kg" in pres:
+            st.session_state.unidad_sel = "kg"
+    
+    def on_unidad_change():
+        st.session_state.unidad_sel = st.session_state.admin_unidad
+    
     with st.form("nuevo_producto"):
         st.subheader("Nuevo Producto")
-        nuevo_nombre = st.text_input("Descripción del producto *", key="new_nombre")
-        nuevo_codigo = st.text_input("Código *", key="new_codigo")
+        nuevo_nombre = st.text_input("Descripción del producto *", key="admin_nombre")
+        nuevo_codigo = st.text_input("Código *", key="admin_codigo")
         
         col_np1, col_np2 = st.columns(2)
         with col_np1:
-            nueva_clasificacion = st.selectbox("Clasificación *", ["Producto Terminado", "Mercadería"], key="new_clasif")
+            nueva_clasificacion = st.selectbox("Clasificación *", ["Producto Terminado", "Mercadería"], key="admin_clasif")
         with col_np2:
-            nueva_linea = st.selectbox("Línea *", LINEAS, key="new_linea")
+            nueva_linea = st.selectbox("Línea *", LINEAS, key="admin_linea")
         
         col_np3, col_np4 = st.columns(2)
         with col_np3:
@@ -357,40 +400,44 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
                 ["Sacos x 25 kg", "Bidones x 20 lt", "Bidón x 20 lt", "Bidón x 35 lt", 
                  "Botella x 1 lt", "Bigbag x 1000 kg", "Bigbag x 1250 kg", 
                  "Balde x 25 kg", "Otra"],
-                key="new_presentacion"
+                key="admin_presentacion",
+                on_change=on_presentacion_change
             )
         with col_np4:
-            nueva_unidad = st.selectbox("Unidad de medida *", ["kg", "lt"], key="new_unidad")
+            nueva_unidad = st.selectbox(
+                "Unidad de medida *", 
+                ["kg", "lt"], 
+                key="admin_unidad",
+                index=0 if st.session_state.unidad_sel == "kg" else 1,
+                on_change=on_unidad_change
+            )
         
-        # Calcular factor automáticamente basado en la presentación Y unidad
+        # Calcular factor automáticamente
         if nueva_presentacion == "Otra":
-            factor = st.number_input("Cantidad por unidad *", min_value=0.1, value=1.0, key="new_factor_manual")
+            factor_admin = st.number_input("Cantidad por unidad *", min_value=0.1, value=1.0, key="admin_factor_manual")
         else:
-            # Extraer número de la presentación
             numeros = re.findall(r'(\d+)', nueva_presentacion)
-            if numeros:
-                factor = float(numeros[0])
-                # Verificar consistencia con unidad seleccionada
-                tiene_lt = "lt" in nueva_presentacion.lower()
-                if tiene_lt and nueva_unidad != "lt":
-                    st.warning("⚠️ La presentación indica 'lt' pero seleccionaste unidad 'kg'")
-                elif not tiene_lt and nueva_unidad == "lt" and "kg" in nueva_presentacion.lower():
-                    st.warning("⚠️ La presentación indica 'kg' pero seleccionaste unidad 'lt'")
-            else:
-                factor = 1.0
+            factor_admin = float(numeros[0]) if numeros else 1.0
+            st.number_input(
+                "Cantidad por unidad (automático)", 
+                value=factor_admin, 
+                disabled=True, 
+                key="admin_factor_auto"
+            )
             
-            st.number_input("Cantidad por unidad (automático)", value=factor, disabled=True, key="new_factor_auto")
+            # Verificar consistencia
+            tiene_lt = "lt" in nueva_presentacion.lower()
+            tiene_kg = "kg" in nueva_presentacion.lower()
+            if tiene_lt and nueva_unidad != "lt":
+                st.warning("⚠️ La presentación indica 'lt' pero seleccionaste unidad 'kg'")
+            elif tiene_kg and nueva_unidad != "kg":
+                st.warning("⚠️ La presentación indica 'kg' pero seleccionaste unidad 'lt'")
         
         agregar = st.form_submit_button("Agregar al catálogo")
     
     if agregar:
         if nuevo_nombre and nuevo_codigo:
-            # Determinar factor final
-            if nueva_presentacion == "Otra":
-                factor_final = factor
-            else:
-                numeros = re.findall(r'(\d+)', nueva_presentacion)
-                factor_final = float(numeros[0]) if numeros else 1.0
+            factor_final = factor_admin
             
             CATALOGO_PRODUCTOS[nuevo_nombre] = {
                 "codigo": nuevo_codigo,
@@ -402,7 +449,6 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
             }
             guardar_catalogo(CATALOGO_PRODUCTOS)
             st.success(f"✅ Producto '{nuevo_nombre}' agregado correctamente")
-            st.balloons()
         else:
             st.error("❌ Debes completar todos los campos obligatorios (*)")
     
@@ -411,7 +457,7 @@ with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
     catalogo_df = pd.DataFrame.from_dict(CATALOGO_PRODUCTOS, orient='index')
     st.dataframe(catalogo_df, use_container_width=True)
     
-    # Opción para eliminar producto (nueva)
+    # Eliminar producto
     st.subheader("🗑️ Eliminar producto del catálogo")
     producto_a_eliminar = st.selectbox(
         "Selecciona producto a eliminar",

@@ -21,8 +21,8 @@ LINEAS = [
     "Magnesio", "Magnesio Suelo", "Fierro", "Nitrato de Magnesio", 
     "Zinc Hepta", "Zinc Mono", "Azufre", "Sulfato de Potasio", 
     "Nitrato de Calcio", "Manganeso", "Nitrato de Potasio", "Cobre", 
-    "Fosfato Monoamonico", "Acido Borico", "Acido Fosforico", 
-    "Quelatos"
+    "Fosfato Monoamónico", "Ácido Bórico", "Ácido Fosfórico", 
+    "Quelatos", "Otras Mercaderías"
 ]
 
 # --- FUNCIONES DEL CATÁLOGO ---
@@ -30,11 +30,22 @@ def cargar_catalogo():
     """Carga el catálogo desde archivo JSON o crea uno por defecto"""
     try:
         with open(CATALOGO_PATH, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            catalogo = json.load(f)
+            # Agregar Sulcopenta si no existe
+            if "Sulcopenta F-4" not in catalogo:
+                catalogo["Sulcopenta F-4"] = {
+                    "codigo": "PT000000263",
+                    "presentacion": "Bidón x 20 lt",
+                    "factor": 20,
+                    "unidad": "lt",
+                    "clasificacion": "Producto Terminado",
+                    "linea": "Quelatos"
+                }
+                guardar_catalogo(catalogo)
+            return catalogo
     except FileNotFoundError:
         catalogo_default = {
-            # Magnesio
-            "Sulfato de Magnesio Heptahidratado (PT)": {
+            "Sulfato de Magnesio Heptahidratado (Prueba)": {
                 "codigo": "PT0000000093",
                 "presentacion": "Sacos x 25 kg",
                 "factor": 25,
@@ -42,80 +53,13 @@ def cargar_catalogo():
                 "clasificacion": "Producto Terminado",
                 "linea": "Magnesio"
             },
-            "Oxido de Magnesio (PT)": {
-                "codigo": "PT000000174",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Magnesio"
-            },
-            "Sulfato de Magnesio Heptahidratado SQM (PT)": {
-                "codigo": "PT000000153",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Magnesio"
-            },
-            "Sulfato de Magnesio Heptahidratado - Quiagral (PT)": {
-                "codigo": "PT000000156",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Magnesio"
-            },
-            "Sulfato de Magnesio Heptahidratado - Industrial (PT)": {
-                "codigo": "PT000000191",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Magnesio"
-            },
-            # Magnesio Suelo
-            "Sulfato de Magnesio Suelo (PT)": {
-                "codigo": "PT000000245",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Magnesio Suelo"
-            },
-            "Sulfato de Magnesio Suelo (MRC)": {
-                "codigo": "MRC000000015",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Magnesio Suelo"
-            },
-            # Nitrato de Magnesio
-            "Nitrato de Magnesio Hexahidratado (PT)": {
-                "codigo": "PT000000230",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Nitrato de Magnesio"
-            },
             "Nitrato de Magnesio Hexahidratado (MRC)": {
                 "codigo": "MRC000000053",
                 "presentacion": "Sacos x 25 kg",
                 "factor": 25,
                 "unidad": "kg",
-                "clasificacion": "Mercaderia",
+                "clasificacion": "Mercadería",
                 "linea": "Nitrato de Magnesio"
-            },
-            # Fierro
-            "Sulfato Feroso Heptahidratado C/C (PT)": {
-                "codigo": "PT000000130",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fierro"
             },
             "Sulfato Ferroso Tetrahidratado (PT)": {
                 "codigo": "PT0000000117",
@@ -125,453 +69,25 @@ def cargar_catalogo():
                 "clasificacion": "Producto Terminado",
                 "linea": "Fierro"
             },
-            "Sulfato Ferroso Heptahidratado S/C (PT)": {
-                "codigo": "PT0000000111",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fierro"
-            },
-            "Sulfato Ferroso Heptahidratado - Fermagri (PT)": {
-                "codigo": "PT0000000114",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fierro"
-            },
-            "Sulfato Ferroso Heptahidratado - Quiagral (PT)": {
-                "codigo": "PT000000138",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fierro"
-            },
-            "Sulfato Ferroso Heptahidratado S/C USP (PT)": {
-                "codigo": "PT0000000113",
-                "presentacion": "Tambor x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fierro"
-            },
-            "Sulfato Ferroso Monohidratado USP (PT)": {
-                "codigo": "PT0000000116",
-                "presentacion": "Tambor x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fierro"
-            },
-            "Sulfato Ferroso Monohidratado (MRC)": {
-                "codigo": "MRC000000048",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Fierro"
-            },
-            "Sulfato Ferroso Heptahidratado Paletizado (PT)": {
-                "codigo": "PT000000189",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fierro"
-            },
-            # Zinc Hepta
-            "Sulfato de Zinc Heptahidratado (MRC)": {
-                "codigo": "MRC000000021",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Zinc Hepta"
-            },
-            "Sulfato de Zinc Heptahidratado - Nexa el Porvenir (PT)": {
-                "codigo": "PT0000000104",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Hepta"
-            },
-            "Sulfato de Zinc Heptahidratado (PT)": {
-                "codigo": "PT0000000173",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Hepta"
-            },
-            "Sulfato de Zinc Heptahidratado PT Bigbag x 1 TM (PT)": {
-                "codigo": "PT0000000145",
-                "presentacion": "Bigbag x 1000 kg",
-                "factor": 1000,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Hepta"
-            },
-            "Sulfato de Zinc Heptahidratado PT Bigbag x 1.5 TM (PT)": {
-                "codigo": "PT0000000174",
-                "presentacion": "Bigbag x 1500 kg",
-                "factor": 1500,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Hepta"
-            },
-            "Sulfato de Zinc Heptahidratado - Diamond (PT)": {
-                "codigo": "PT0000000163",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Hepta"
-            },
-            "Sulfato de Zinc Heptahidratado - Quiagral (PT)": {
-                "codigo": "PT0000000140",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Hepta"
-            },
-            # Zinc Mono
-            "Sulfato de Zinc Monohidratado 1 TM - Exportacion (PT)": {
-                "codigo": "PT0000000126",
-                "presentacion": "Bigbag x 1000 kg",
-                "factor": 1000,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Mono"
-            },
-            "Sulfato de Zinc Monohidratado - Antamina (PT)": {
-                "codigo": "PT000000182",
-                "presentacion": "Bigbag x 1000 kg",
-                "factor": 1000,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Mono"
-            },
-            "Sulfato de Zinc Monohidratado AFG (MRC)": {
-                "codigo": "MRC000000024",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Zinc Mono"
-            },
-            "Sulfato de Zinc Monohidratado (PT)": {
-                "codigo": "PT000000181",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Zinc Mono"
-            },
-            # Azufre
-            "Azufre Puro Granulado (PT)": {
-                "codigo": "PT000000209",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Azufre"
-            },
-            "Fungisulf WP (PT)": {
-                "codigo": "PT000000188",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Azufre"
-            },
-            "Fungisulf DP-400 (PT)": {
-                "codigo": "PT000000187",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Azufre"
-            },
-            "Azufre Puro Micronizado (PT)": {
-                "codigo": "PT000000216",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Azufre"
-            },
-            # Sulfato de Potasio
-            "Sulfato de potasio (MRC)": {
+            "Sulfato de Potasio (MRC)": {
                 "codigo": "MRC000000019",
                 "presentacion": "Sacos x 25 kg",
                 "factor": 25,
                 "unidad": "kg",
-                "clasificacion": "Mercaderia",
+                "clasificacion": "Mercadería",
                 "linea": "Sulfato de Potasio"
             },
-            "Sulfato de potasio (PT)": {
-                "codigo": "PT000000134",
+            "Sulfato Feroso Heptahidratado C/C (PT)": {
+                "codigo": "PT000000130",
                 "presentacion": "Sacos x 25 kg",
                 "factor": 25,
                 "unidad": "kg",
                 "clasificacion": "Producto Terminado",
-                "linea": "Sulfato de Potasio"
+                "linea": "Fierro"
             },
-            # Nitrato de Calcio
-            "Nitrato de Calcio/Granular (PT)": {
-                "codigo": "PT000000173",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Nitrato de Calcio"
-            },
-            "Nitrato de Calcio Tetrahidratado Cristalizado (PT)": {
-                "codigo": "PT000000171",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Nitrato de Calcio"
-            },
-            "Nitrato de Calcio/Amonio (MRC)": {
-                "codigo": "MRC000000029",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Nitrato de Calcio"
-            },
-            # Manganeso
-            "Sulfato de Manganeso Monohidratado (PT)": {
-                "codigo": "PT0000000094",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Manganeso"
-            },
-            "Sulfato de Manganeso Monohidratado al 31% (MRC)": {
-                "codigo": "MRC000000018",
-                "presentacion": "Bigbag x 1000 kg",
-                "factor": 1000,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Manganeso"
-            },
-            # Nitrato de Potasio
-            "Nitrato de Potasio (MRC)": {
-                "codigo": "MRC000000030",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Nitrato de Potasio"
-            },
-            "Nitrato de Potasio (PT)": {
-                "codigo": "PT000000195",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Nitrato de Potasio"
-            },
-            # Cobre
-            "Oxicloruro de Cobre (MRC)": {
-                "codigo": "MRC000000009",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Cobre"
-            },
-            "Sulfato de Cobre Pentahidratado - Marcobre (MRC)": {
-                "codigo": "MRC000000010",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Cobre"
-            },
-            "Sulfato de Cobre Pentahidratado (PT)": {
-                "codigo": "PT000000231",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Cobre"
-            },
-            "Sulfato de Cobre Pentahidratado - Nacol (MRC)": {
-                "codigo": "MRC000000011",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Cobre"
-            },
-            # Fosfato Monoamonico
-            "Fosfato Monoamonico (PT)": {
-                "codigo": "PT000000229",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Fosfato Monoamonico"
-            },
-            "Fosfato Monoamonico (MRC)": {
-                "codigo": "MRC000000036",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Fosfato Monoamonico"
-            },
-            # Acido Borico
-            "Acido Borico Granulado (MRC)": {
-                "codigo": "MRC000000043",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Acido Borico"
-            },
-            "Acido Borico (PT)": {
-                "codigo": "PT000000244",
-                "presentacion": "Sacos x 25 kg",
-                "factor": 25,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Acido Borico"
-            },
-            # Acido Fosforico
-            "Acido Fosforico al 85 % - Grado Tecnico (MRC)": {
-                "codigo": "MRC000000040",
-                "presentacion": "Bidon x 35 kg",
-                "factor": 35,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Acido Fosforico"
-            },
-            "Acido Fosforico (PT)": {
-                "codigo": "PT000000133",
-                "presentacion": "Bidon x 33.65 kg",
-                "factor": 33.65,
-                "unidad": "kg",
-                "clasificacion": "Producto Terminado",
-                "linea": "Acido Fosforico"
-            },
-            "Acido Fosforico al 85 % - Grado Alimenticio (MRC)": {
-                "codigo": "MRC000000001",
-                "presentacion": "Bidon x 35 kg",
-                "factor": 35,
-                "unidad": "kg",
-                "clasificacion": "Mercaderia",
-                "linea": "Acido Fosforico"
-            },
-            # Quelatos
-            "Organikel Vida Plus (20 lt)": {
-                "codigo": "PT000000200",
-                "presentacion": "Bidon x 20 lt",
-                "factor": 20,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Organikel Vida Plus (1 lt)": {
-                "codigo": "PT000000199",
-                "presentacion": "Frasco x 1 lt",
-                "factor": 1,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Citrato de Magnesio (1 lt)": {
-                "codigo": "PT0000000001",
-                "presentacion": "Frasco x 1 lt",
-                "factor": 1,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Sulcopenta F-4 (20 lt)": {
+            "Sulcopenta F-4": {
                 "codigo": "PT000000263",
-                "presentacion": "Bidon x 20 lt",
-                "factor": 20,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Sulcopenta (20 lt)": {
-                "codigo": "PT0000000070",
-                "presentacion": "Bidon x 20 lt",
-                "factor": 20,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Sulcopenta F-4 (1 lt)": {
-                "codigo": "PT000000264",
-                "presentacion": "Frasco x 1 lt",
-                "factor": 1,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Sulcopenta F-3 (1 lt)": {
-                "codigo": "PT000000206",
-                "presentacion": "Frasco x 1 lt",
-                "factor": 1,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Organikel Zinc Plus 25% (1 lt)": {
-                "codigo": "PT000000236",
-                "presentacion": "Frasco x 1 lt",
-                "factor": 1,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Organikel NPK 5-50-5 (1 lt)": {
-                "codigo": "PT0000000057",
-                "presentacion": "Frasco x 1 lt",
-                "factor": 1,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Organikel NPK 5-50-5 (20 lt)": {
-                "codigo": "PT0000000044",
-                "presentacion": "Bidon x 20 lt",
-                "factor": 20,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Organikel PK 0-40-40 (1 lt)": {
-                "codigo": "PT000000148",
-                "presentacion": "Frasco x 1 lt",
-                "factor": 1,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Organikel PK 0-40-40 (20 lt)": {
-                "codigo": "PT0000000047",
-                "presentacion": "Bidon x 20 lt",
-                "factor": 20,
-                "unidad": "lt",
-                "clasificacion": "Producto Terminado",
-                "linea": "Quelatos"
-            },
-            "Organikel Magnesio 14.5% (20 lt)": {
-                "codigo": "PT000000221",
-                "presentacion": "Bidon x 20 lt",
+                "presentacion": "Bidón x 20 lt",
                 "factor": 20,
                 "unidad": "lt",
                 "clasificacion": "Producto Terminado",
@@ -653,8 +169,8 @@ init_db()
 
 # --- DATOS PERSONALIZADOS ---
 ALMACENES = [
-    "Almacen A", "Almacen D", "Almacen E", "Almacen F", "Almacen G",
-    "Almacen 13 (Sullana)", "Almacen 3 (Ica)", "Ferrofert (Paita)"
+    "Almacén A", "Almacén D", "Almacén E", "Almacén F", "Almacén G",
+    "Almacén 13 (Sullana)", "Almacén 3 (Ica)", "Ferrofert (Paita)"
 ]
 
 # --- INICIALIZAR SESSION STATE ---

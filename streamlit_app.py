@@ -16,7 +16,7 @@ st.write("Registro de inventario con base de datos permanente")
 DB_PATH = "inventario.db"
 CATALOGO_PATH = "catalogo_productos.json"
 
-# --- LÍNEAS DISPONIBLES (sin tildes, sin "Otras Mercaderías") ---
+# --- LÍNEAS DISPONIBLES ---
 LINEAS = [
     "Magnesio", "Magnesio Suelo", "Fierro", "Nitrato de Magnesio", 
     "Zinc Hepta", "Zinc Mono", "Azufre", "Sulfato de Potasio", 
@@ -32,7 +32,7 @@ def cargar_catalogo():
         with open(CATALOGO_PATH, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        # Catálogo completo con todos los productos (sin tildes)
+        # Catálogo completo con todos los productos
         catalogo_default = {
             # Magnesio
             "Sulfato de Magnesio Heptahidratado (PT)": {

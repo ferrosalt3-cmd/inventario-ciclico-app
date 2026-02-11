@@ -21,8 +21,8 @@ LINEAS = [
     "Magnesio", "Magnesio Suelo", "Fierro", "Nitrato de Magnesio", 
     "Zinc Hepta", "Zinc Mono", "Azufre", "Sulfato de Potasio", 
     "Nitrato de Calcio", "Manganeso", "Nitrato de Potasio", "Cobre", 
-    "Fosfato Monoamónico", "Ácido Bórico", "Ácido Fosfórico", 
-    "Quelatos"
+    "Fosfato Monoamonico", "Ácido Borico", "Ácido Fosforico", 
+    "Quelatos", "Otras"
 ]
 
 # --- FUNCIONES DEL CATÁLOGO ---
@@ -109,7 +109,7 @@ def cargar_catalogo():
                 "linea": "Nitrato de Magnesio"
             },
             # Fierro
-            "Sulfato Feroso Heptahidratado C/C (PT)": {
+            "Sulfato Ferroso Heptahidratado C/C (PT)": {
                 "codigo": "PT000000130",
                 "presentacion": "Sacos x 25 kg",
                 "factor": 25,

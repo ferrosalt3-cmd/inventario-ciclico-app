@@ -6,22 +6,16 @@ import re
 import os
 from datetime import datetime
 
-DB_PATH = "inventario.db"
-CATALOGO_PATH = "catalogo_productos.json"
-
-# Borrar archivos si existen para forzar recreación
-for archivo in [DB_PATH, CATALOGO_PATH]:
-    if os.path.exists(archivo):
-        try:
-            os.remove(archivo)
-            print(f"Borrado: {archivo}")
-        except:
-            pass
 # Configuración de la página
 st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭")
 
 st.title("🏭 Sistema de Inventario Cíclico - Sulfatos")
 st.write("Registro de inventario con base de datos permanente")
+
+# --- CONFIGURACIÓN ARCHIVOS ---
+DB_PATH = "inventario.db"
+CATALOGO_PATH = "catalogo_productos.json"
+
 # --- LÍNEAS DISPONIBLES ---
 LINEAS = [
     "Magnesio", "Magnesio Suelo", "Fierro", "Nitrato de Magnesio", 

@@ -22,11 +22,6 @@ st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭"
 
 st.title("🏭 Sistema de Inventario Cíclico - Sulfatos")
 st.write("Registro de inventario con base de datos permanente")
-
-# --- CONFIGURACIÓN ARCHIVOS ---
-DB_PATH = "inventario.db"
-CATALOGO_PATH = "catalogo_productos.json"
-
 # --- LÍNEAS DISPONIBLES ---
 LINEAS = [
     "Magnesio", "Magnesio Suelo", "Fierro", "Nitrato de Magnesio", 

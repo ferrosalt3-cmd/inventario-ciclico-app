@@ -156,6 +156,14 @@ def obtener_inventario():
     conn.close()
     return df
 
+def eliminar_registro(id_registro):
+    """Elimina un registro de la base de datos por ID"""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM inventario WHERE id = ?", (id_registro,))
+    conn.commit()
+    conn.close()
+
 # Inicializar base de datos
 init_db()
 
@@ -360,6 +368,44 @@ if not df.empty:
         f"inventario_{datetime.now().strftime('%Y%m%d')}.csv",
         "text/csv"
     )
+    
+    # --- SECCIÓN ELIMINAR REGISTRO ---
+    st.divider()
+    st.subheader("🗑️ Eliminar registro del historial")
+    
+    # Crear lista desplegable con registros formateados
+    opciones_registros = []
+    for idx, row in df.iterrows():
+        texto = f"ID {row['id']} - {row['fecha_hora']} | {row['producto']} | {row['cantidad_unidades']} unidades | {row['responsable']}"
+        opciones_registros.append((row['id'], texto))
+    
+    # Mostrar solo los textos en el selectbox
+    registro_seleccionado = st.selectbox(
+        "Selecciona el registro a eliminar",
+        options=[opt[1] for opt in opciones_registros],
+        key="registro_a_eliminar"
+    )
+    
+    # Obtener el ID correspondiente al texto seleccionado
+    id_a_eliminar = None
+    for opt_id, opt_texto in opciones_registros:
+        if opt_texto == registro_seleccionado:
+            id_a_eliminar = opt_id
+            break
+    
+    col_del1, col_del2 = st.columns(2)
+    with col_del1:
+        confirmar = st.checkbox("Confirmar eliminación", key="confirmar_delete")
+    with col_del2:
+        if st.button("Eliminar registro seleccionado", type="primary", disabled=not confirmar):
+            if id_a_eliminar:
+                eliminar_registro(id_a_eliminar)
+                st.success(f"✅ Registro ID {id_a_eliminar} eliminado correctamente")
+                st.rerun()
+    
+    if not confirmar:
+        st.info("ℹ️ Marca la casilla de confirmación para habilitar el botón de eliminar")
+        
 else:
     st.info("Aún no hay registros. Agrega tu primer producto arriba.")
 

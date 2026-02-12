@@ -590,63 +590,74 @@ def guardar_catalogo(catalogo):
 CATALOGO_PRODUCTOS = cargar_catalogo()
 
 # --- CONFIGURACIÓN SQLITE ---
+def get_connection():
+    """Devuelve una conexión a la base de datos"""
+    return sqlite3.connect(DB_PATH)
+
 def init_db():
     """Crea la base de datos si no existe"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS inventario (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fecha_hora TEXT,
-            codigo TEXT,
-            producto TEXT,
-            clasificacion TEXT,
-            linea TEXT,
-            presentacion TEXT,
-            cantidad_unidades INTEGER,
-            total_kg_lt REAL,
-            unidad_medida TEXT,
-            almacen TEXT,
-            responsable TEXT,
-            observaciones TEXT,
-            estado TEXT DEFAULT 'Pendiente'
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS inventario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha_hora TEXT,
+                codigo TEXT,
+                producto TEXT,
+                clasificacion TEXT,
+                linea TEXT,
+                presentacion TEXT,
+                cantidad_unidades INTEGER,
+                total_kg_lt REAL,
+                unidad_medida TEXT,
+                almacen TEXT,
+                responsable TEXT,
+                observaciones TEXT,
+                estado TEXT DEFAULT 'Pendiente'
+            )
+        ''')
+        conn.commit()
 
 def guardar_registro(datos):
     """Guarda un registro en la base de datos"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO inventario 
-        (fecha_hora, codigo, producto, clasificacion, linea, presentacion, cantidad_unidades, 
-         total_kg_lt, unidad_medida, almacen, responsable, observaciones)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        datos['fecha_hora'], datos['codigo'], datos['producto'], 
-        datos['clasificacion'], datos['linea'], datos['presentacion'], 
-        datos['cantidad_unidades'], datos['total_kg_lt'], datos['unidad_medida'], 
-        datos['almacen'], datos['responsable'], datos['observaciones']
-    ))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO inventario 
+            (fecha_hora, codigo, producto, clasificacion, linea, presentacion, cantidad_unidades, 
+             total_kg_lt, unidad_medida, almacen, responsable, observaciones)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            datos['fecha_hora'],
+            datos['codigo'],
+            datos['producto'],
+            datos['clasificacion'],
+            datos['linea'],
+            datos['presentacion'],
+            datos['cantidad_unidades'],
+            datos['total_kg_lt'],
+            datos['unidad_medida'],
+            datos['almacen'],
+            datos['responsable'],
+            datos['observaciones']
+        ))
+        conn.commit()
 
 def obtener_inventario():
     """Obtiene todos los registros"""
-    conn = sqlite3.connect(DB_PATH)
-    df = pd.read_sql_query("SELECT * FROM inventario ORDER BY fecha_hora DESC", conn)
-    conn.close()
+    with get_connection() as conn:
+        df = pd.read_sql_query(
+            "SELECT * FROM inventario ORDER BY fecha_hora DESC",
+            conn
+        )
     return df
 
 def eliminar_registro(id_registro):
     """Elimina un registro de la base de datos por ID"""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM inventario WHERE id = ?", (id_registro,))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM inventario WHERE id = ?", (id_registro,))
+        conn.commit()
 
 # Inicializar base de datos
 init_db()

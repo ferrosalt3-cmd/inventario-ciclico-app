@@ -858,6 +858,11 @@ if not df.empty:
     
     def convertir_a_excel(df):
         output = io.BytesIO()
+        df_export = df.copy()
+        df_export.columns = [
+            col.replace("_", " ").title()
+            for col in df_export.columns
+        ]
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Inventario')
         output.seek(0)

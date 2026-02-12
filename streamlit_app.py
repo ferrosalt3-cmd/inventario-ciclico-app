@@ -835,9 +835,9 @@ if not df.empty:
     if filtro_linea_hist:
         df_filtrado = df_filtrado[df_filtrado["linea"].isin(filtro_linea_hist)]
     
-    columnas_mostrar = ['fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion', 
-                       'presentacion', 'cantidad_unidades', 'total_kg_lt', 'unidad_medida', 
-                       'almacen', 'responsable', 'observaciones']
+    columnas_mostrar = ['Fecha_hora', 'Codigo', 'Producto', 'Linea', 'Clasificacion', 
+                       'Presentacion', 'Cantidad_Unidades', 'Total_kg_lt', 'Unidad_Medida', 
+                       'Almacen', 'Responsable', 'Observaciones']
     df_display = df_filtrado[columnas_mostrar] if all(col in df_filtrado.columns for col in columnas_mostrar) else df_filtrado
     
     st.dataframe(df_display, use_container_width=True)

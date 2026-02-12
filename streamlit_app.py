@@ -21,7 +21,7 @@ LINEAS = [
     "Magnesio", "Magnesio Suelo", "Fierro", "Nitrato de Magnesio", 
     "Zinc Hepta", "Zinc Mono", "Azufre", "Sulfato de Potasio", 
     "Nitrato de Calcio", "Manganeso", "Nitrato de Potasio", "Cobre", 
-    "Fosfato Monoamonico", "Acido Borico", "Acido Fosforico", 
+    "Fosfato Monoamonico", "Ácido Borico", "Ácido Fosforico", 
     "Quelatos", "Otras"
 ]
 

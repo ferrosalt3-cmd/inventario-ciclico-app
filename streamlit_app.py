@@ -635,7 +635,7 @@ def guardar_registro(datos):
             datos['linea'],
             datos['presentacion'],
             datos['cantidad_unidades'],
-            datos['Total_kg_lt'],
+            datos['total_kg_lt'],
             datos['unidad_medida'],
             datos['almacen'],
             datos['responsable'],

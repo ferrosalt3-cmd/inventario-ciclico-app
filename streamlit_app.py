@@ -884,8 +884,8 @@ if not df.empty:
     # Crear lista desplegable con registros formateados
     opciones_registros = []
     for idx, row in df.iterrows():
-        texto = f"ID {row['Id']} - {row['Fecha_Hora']} | {row['Producto']} | {row['Cantidad_Unidades']} Unidades | {row['Responsable']}"
-        opciones_registros.append((row['Id'], texto))
+        texto = f"ID {row['id']} - {row['fecha_hora']} | {row['producto']} | {row['cantidad_unidades']} unidades | {row['responsable']}"
+        opciones_registros.append((row['id'], texto))
     
     # Mostrar solo los textos en el selectbox
     registro_seleccionado = st.selectbox(

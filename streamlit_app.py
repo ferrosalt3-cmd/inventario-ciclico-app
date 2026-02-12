@@ -628,18 +628,18 @@ def guardar_registro(datos):
              Total_kg_lt, Unidad_Medida, Almacen, Responsable, Observaciones)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            datos['Fecha_Hora'],
-            datos['Codigo'],
-            datos['Producto'],
-            datos['Clasificacion'],
-            datos['Linea'],
-            datos['Presentacion'],
-            datos['Cantidad_Unidades'],
+            datos['fecha_hora'],
+            datos['codigo'],
+            datos['producto'],
+            datos['clasificacion'],
+            datos['linea'],
+            datos['presentacion'],
+            datos['cantidad_unidades'],
             datos['Total_kg_lt'],
-            datos['Unidad_Medida'],
-            datos['Almacen'],
-            datos['Responsable'],
-            datos['Observaciones']
+            datos['unidad_medida'],
+            datos['almacen'],
+            datos['responsable'],
+            datos['observaciones']
         ))
         conn.commit()
 

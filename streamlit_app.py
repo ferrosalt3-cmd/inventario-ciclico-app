@@ -3,7 +3,7 @@ import pandas as pd
 import sqlite3
 import json
 import re
-import os
+import io
 from datetime import datetime
 
 # Configuración de la página
@@ -856,13 +856,21 @@ if not df.empty:
         total_lt = df_filtrado[df_filtrado["unidad_medida"] == "lt"]["total_kg_lt"].sum() if "unidad_medida" in df_filtrado.columns else 0
         st.metric("Total LT", f"{total_lt:,.0f}")
     
-    csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        "📥 Descargar Excel completo",
-        csv,
-        f"inventario_{datetime.now().strftime('%Y%m%d')}.csv",
-        "text/csv"
-    )
+def convertir_a_excel(df):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Inventario')
+    output.seek(0)
+    return output
+
+excel_file = convertir_a_excel(df)
+
+st.download_button(
+    label="Descargar Excel completo",
+    data=excel_file,
+    file_name="inventario_completo.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
     
     # --- SECCIÓN ELIMINAR REGISTRO ---
     st.divider()

@@ -847,13 +847,13 @@ if not df.empty:
     with col_r1:
         st.metric("Total registros", len(df_filtrado))
     with col_r2:
-        total_unidades = df_filtrado["Cantidad_Unidades"].sum() if "Cantidad_Unidades" in df_filtrado.columns else 0
+        total_unidades = df_filtrado["cantidad_unidades"].sum() if "cantidad_unidades" in df_filtrado.columns else 0
         st.metric("Total unidades", int(total_unidades))
     with col_r3:
-        total_kg = df_filtrado[df_filtrado["Unidad_Medida"] == "kg"]["Total_kg_lt"].sum() if "Unidad_Medida" in df_filtrado.columns else 0
+        total_kg = df_filtrado[df_filtrado["unidad_medida"] == "kg"]["total_kg_lt"].sum() if "unidad_medida" in df_filtrado.columns else 0
         st.metric("Total KG", f"{total_kg:,.0f}")
     with col_r4:
-        total_lt = df_filtrado[df_filtrado["Unidad_Medida"] == "lt"]["Total_kg_lt"].sum() if "Unidad_Medida" in df_filtrado.columns else 0
+        total_lt = df_filtrado[df_filtrado["unidad_medida"] == "lt"]["total_kg_lt"].sum() if "unidad_medida" in df_filtrado.columns else 0
         st.metric("Total LT", f"{total_lt:,.0f}")
     
     def convertir_a_excel(df):

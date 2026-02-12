@@ -624,22 +624,22 @@ def guardar_registro(datos):
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO inventario 
-            (fecha_hora, codigo, producto, clasificacion, linea, presentacion, cantidad_unidades, 
-             total_kg_lt, unidad_medida, almacen, responsable, observaciones)
+            (Fecha_Hora, Codigo, Producto, Clasificacion, Linea, Presentacion, Cantidad_Unidades, 
+             Total_kg_lt, Unidad_Medida, Almacen, Responsable, Observaciones)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            datos['fecha_hora'],
-            datos['codigo'],
-            datos['producto'],
-            datos['clasificacion'],
-            datos['linea'],
-            datos['presentacion'],
-            datos['cantidad_unidades'],
-            datos['total_kg_lt'],
-            datos['unidad_medida'],
-            datos['almacen'],
-            datos['responsable'],
-            datos['observaciones']
+            datos['Fecha_Hora'],
+            datos['Codigo'],
+            datos['Producto'],
+            datos['Clasificacion'],
+            datos['Linea'],
+            datos['Presentacion'],
+            datos['Cantidad_Unidades'],
+            datos['Total_kg_lt'],
+            datos['Unidad_Medida'],
+            datos['Almacen'],
+            datos['Responsable'],
+            datos['Observaciones']
         ))
         conn.commit()
 
@@ -879,8 +879,8 @@ if not df.empty:
     # Crear lista desplegable con registros formateados
     opciones_registros = []
     for idx, row in df.iterrows():
-        texto = f"ID {row['id']} - {row['fecha_hora']} | {row['producto']} | {row['cantidad_unidades']} unidades | {row['responsable']}"
-        opciones_registros.append((row['id'], texto))
+        texto = f"ID {row['Id']} - {row['Fecha_Hora']} | {row['Producto']} | {row['Cantidad_Unidades']} Unidades | {row['Responsable']}"
+        opciones_registros.append((row['Id'], texto))
     
     # Mostrar solo los textos en el selectbox
     registro_seleccionado = st.selectbox(

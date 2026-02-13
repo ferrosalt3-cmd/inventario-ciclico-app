@@ -1,10 +1,14 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
 import json
 import re
 import io
 from datetime import datetime
+import os
+from sqlalchemy import create_engine, text
+
+DATABASE_URL = st.secrets["DATABASE_URL"]
+engine = create_engine(DATABASE_URL)
 
 # Configuración de la página
 st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭")

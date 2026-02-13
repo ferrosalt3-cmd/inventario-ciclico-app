@@ -595,65 +595,67 @@ CATALOGO_PRODUCTOS = cargar_catalogo()
 
 # --- CONFIGURACIÓN SQLITE ---
 def get_connection():
-    """Devuelve una conexión a la base de datos"""
-    return sqlite3.connect(DB_PATH)
+    """Devuelve una conexión a PostgreSQL"""
+    return engine.connect()
 
 def init_db():
-    """Crea la base de datos si no existe"""
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
+    """Crea la tabla en PostgreSQL si no existe"""
+    with engine.connect() as conn:
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS inventario (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                fecha_hora TEXT,
-                codigo TEXT,
-                producto TEXT,
-                clasificacion TEXT,
-                linea TEXT,
-                presentacion TEXT,
+                id SERIAL PRIMARY KEY,
+                fecha_hora TIMESTAMP,
+                codigo VARCHAR(100),
+                producto VARCHAR(255),
+                clasificacion VARCHAR(100),
+                linea VARCHAR(100),
+                presentacion VARCHAR(100),
                 cantidad_unidades INTEGER,
-                total_kg_lt REAL,
-                unidad_medida TEXT,
-                almacen TEXT,
-                responsable TEXT,
+                total_kg_lt NUMERIC,
+                unidad_medida VARCHAR(50),
+                almacen VARCHAR(100),
+                responsable VARCHAR(100),
                 observaciones TEXT,
-                estado TEXT DEFAULT 'Pendiente'
+                estado VARCHAR(50) DEFAULT 'Pendiente'
             )
-        ''')
+        """))
         conn.commit()
 
 def guardar_registro(datos):
-    """Guarda un registro en la base de datos"""
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
+    """Guarda un registro en PostgreSQL"""
+    with engine.connect() as conn:
+        conn.execute(text("""
             INSERT INTO inventario 
-            (Fecha_Hora, Codigo, Producto, Clasificacion, Linea, Presentacion, Cantidad_Unidades, 
-             Total_kg_lt, Unidad_Medida, Almacen, Responsable, Observaciones)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            datos['fecha_hora'],
-            datos['codigo'],
-            datos['producto'],
-            datos['clasificacion'],
-            datos['linea'],
-            datos['presentacion'],
-            datos['cantidad_unidades'],
-            datos['total_kg_lt'],
-            datos['unidad_medida'],
-            datos['almacen'],
-            datos['responsable'],
-            datos['observaciones']
-        ))
+            (fecha_hora, codigo, producto, clasificacion, linea, presentacion, 
+             cantidad_unidades, total_kg_lt, unidad_medida, almacen, 
+             responsable, observaciones)
+            VALUES 
+            (:fecha_hora, :codigo, :producto, :clasificacion, :linea, :presentacion,
+             :cantidad_unidades, :total_kg_lt, :unidad_medida, :almacen,
+             :responsable, :observaciones)
+        """), {
+            "fecha_hora": datos['fecha_hora'],
+            "codigo": datos['codigo'],
+            "producto": datos['producto'],
+            "clasificacion": datos['clasificacion'],
+            "linea": datos['linea'],
+            "presentacion": datos['presentacion'],
+            "cantidad_unidades": datos['cantidad_unidades'],
+            "total_kg_lt": datos['total_kg_lt'],
+            "unidad_medida": datos['unidad_medida'],
+            "almacen": datos['almacen'],
+            "responsable": datos['responsable'],
+            "observaciones": datos['observaciones']
+        })
         conn.commit()
 
 def obtener_inventario():
-    """Obtiene todos los registros"""
-    with get_connection() as conn:
-        df = pd.read_sql_query(
-            "SELECT * FROM inventario ORDER BY fecha_hora DESC",
-            conn
-        )
+    """Obtiene todos los registros desde PostgreSQL"""
+    query = text("SELECT * FROM inventario ORDER BY fecha_hora DESC")
+    
+    with engine.connect() as conn:
+        df = pd.read_sql(query, conn)
+    
     return df
 
 def eliminar_registro(id_registro):

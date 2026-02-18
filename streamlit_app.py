@@ -839,13 +839,18 @@ if not df.empty:
     # Convertir fecha_hora a tipo fecha si no lo está
     df["fecha_hora"] = pd.to_datetime(df["fecha_hora"])
 
-    if fecha_inicio and fecha_fin:
+    # Filtro por rango de fechas
+    df_filtrado = df[
+        (df["fecha_hora"].dt.date >= fecha_inicio) &
+        (df["fecha_hora"].dt.date <= fecha_fin)
+    ]
 
-        df_filtrado = df[
-            (df["fecha_hora"].dt.date >= fecha_inicio) &
-            (df["fecha_hora"].dt.date <= fecha_fin)
-        ]
-    
+    rango_fechas = st.date_input(
+        "Filtrar por rango de fechas",
+        value=(fecha_min, fecha_max),
+        min_value=fecha_min,
+        max_value=fecha_max
+    )
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
         filtro_almacen = st.multiselect("Filtrar por Almacén", ALMACENES, key="hist_almacen")

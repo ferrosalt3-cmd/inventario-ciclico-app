@@ -908,12 +908,15 @@ if not df.empty:
 
     # Mostrar resultados
     columnas_mostrar = [
-        'fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion',
+        'id', 'fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion',
         'presentacion', 'cantidad_unidades', 'total_kg_lt',
         'unidad_medida', 'almacen', 'responsable', 'observaciones'
     ]
 
-    df_display = df_filtrado[columnas_mostrar]
+    df_display = df_filtrado[columnas_mostrar].sort_values(
+        by="fecha_hora",
+        ascending=False
+    )
 
     st.dataframe(df_display, use_container_width=True)
     

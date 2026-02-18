@@ -916,42 +916,61 @@ if not df.empty:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     
-    # --- SECCIÓN ELIMINAR REGISTRO ---
+    # --- SECCIÓN ELIMINAR REGISTROS ---
     st.divider()
-    st.subheader("🗑️ Eliminar registro del historial")
-    
-    # Crear lista desplegable con registros formateados
-    opciones_registros = []
-    for idx, row in df.iterrows():
-        texto = f"ID {row['id']} - {row['fecha_hora']} | {row['producto']} | {row['cantidad_unidades']} unidades | {row['responsable']}"
-        opciones_registros.append((row['id'], texto))
-    
-    # Mostrar solo los textos en el selectbox
-    registro_seleccionado = st.selectbox(
-        "Selecciona el registro a eliminar",
-        options=[opt[1] for opt in opciones_registros],
-        key="registro_a_eliminar"
-    )
-    
-    # Obtener el ID correspondiente al texto seleccionado
-    id_a_eliminar = None
-    for opt_id, opt_texto in opciones_registros:
-        if opt_texto == registro_seleccionado:
-            id_a_eliminar = opt_id
-            break
-    
-    col_del1, col_del2 = st.columns(2)
-    with col_del1:
-        confirmar = st.checkbox("Confirmar eliminación", key="confirmar_delete")
-    with col_del2:
-        if st.button("Eliminar registro seleccionado", type="primary", disabled=not confirmar):
-            if id_a_eliminar:
-                eliminar_registro(id_a_eliminar)
-                st.success(f"✅ Registro ID {id_a_eliminar} eliminado correctamente")
+    st.subheader("🗑️ Eliminar registros del historial")
+
+    if not df.empty:
+
+        # Crear dataframe simplificado para eliminar
+        df_eliminar = df[[
+            "id",
+            "fecha_hora",
+            "producto",
+            "cantidad_unidades",
+            "responsable"
+        ]].copy()
+
+        # 🔎 Filtro opcional para facilitar búsqueda
+        busqueda = st.text_input("🔎 Buscar por producto o responsable")
+
+        if busqueda:
+            df_eliminar = df_eliminar[
+                df_eliminar["producto"].str.contains(busqueda, case=False, na=False) |
+                df_eliminar["responsable"].str.contains(busqueda, case=False, na=False)
+            ]
+
+        # Selección múltiple
+        ids_seleccionados = st.multiselect(
+            "Selecciona uno o más registros para eliminar",
+            options=df_eliminar["id"],
+            format_func=lambda x: (
+                f"ID {x} - "
+                f"{df_eliminar[df_eliminar['id']==x]['fecha_hora'].values[0]} | "
+                f"{df_eliminar[df_eliminar['id']==x]['producto'].values[0]} | "
+                f"{df_eliminar[df_eliminar['id']==x]['cantidad_unidades'].values[0]} und | "
+                f"{df_eliminar[df_eliminar['id']==x]['responsable'].values[0]}"
+            )
+        )
+
+        if ids_seleccionados:
+
+            st.warning("⚠️ Esta acción no se puede deshacer")
+
+            confirmar = st.checkbox("Confirmar eliminación múltiple")
+
+            if st.button("Eliminar registros seleccionados", type="primary", disabled=not confirmar):
+                for id_reg in ids_seleccionados:
+                    eliminar_registro(id_reg)
+
+                st.success(f"✅ {len(ids_seleccionados)} registro(s) eliminado(s) correctamente")
                 st.rerun()
-    
-    if not confirmar:
-        st.info("ℹ️ Marca la casilla de confirmación para habilitar el botón de eliminar")
+
+        else:
+            st.info("ℹ️ Selecciona al menos un registro para habilitar la eliminación")
+
+    else:
+        st.info("No hay registros disponibles para eliminar.")
         
 else:
     st.info("Aún no hay registros. Agrega tu primer producto arriba.")

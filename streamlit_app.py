@@ -809,7 +809,7 @@ if guardar:
         st.error("❌ La cantidad debe ser mayor a 0")
     else:
         datos = {
-            'fecha_hora': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'fecha_hora': fecha_registro,
             'codigo': datos_producto["codigo"],
             'producto': st.session_state.producto_sel,
             'clasificacion': clasificacion_auto,

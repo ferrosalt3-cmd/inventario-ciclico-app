@@ -833,7 +833,8 @@ st.divider()
 st.header("📋 Historial de inventario")
 
 df = obtener_inventario()
-st.write("Columnas originales:", df.columns.tolist())
+st.write("PRUEBA COLUMNAS DF:")
+st.dataframe(df.head())
 
 if not df.empty:
     st.subheader("🔍 Filtros")
@@ -908,14 +909,14 @@ if not df.empty:
 
 
     # Mostrar resultados
-
+    st.write("Columnas disponibles:", df_filtrado.columns.tolist())
 
     columnas_mostrar = [
         'id', 'fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion',
         'presentacion', 'cantidad_unidades', 'total_kg_lt',
         'unidad_medida', 'almacen', 'responsable', 'observaciones'
     ]
-    st.write("Columnas disponibles:", df_filtrado.columns.tolist())
+
     df_display = df_filtrado[columnas_mostrar].sort_values(
         by="fecha_hora",
         ascending=False

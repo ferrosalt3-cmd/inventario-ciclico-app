@@ -907,6 +907,8 @@ if not df.empty:
 
 
     # Mostrar resultados
+    st.write("Columnas disponibles:", df_filtrado.columns.tolist())
+    
     columnas_mostrar = [
         'id', 'fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion',
         'presentacion', 'cantidad_unidades', 'total_kg_lt',

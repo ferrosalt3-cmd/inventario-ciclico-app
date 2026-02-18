@@ -683,7 +683,7 @@ if 'cantidad_val' not in st.session_state:
     st.session_state.cantidad_val = 0
 
 # SECCIÓN 0: CAMBIAR FECHA DE INVENTARIO
-st.subheader("📅 Fecha del inventario")
+st.header("📅 Fecha del inventario")
 
 usar_fecha_manual = st.checkbox("Cambiar fecha del inventario")
 

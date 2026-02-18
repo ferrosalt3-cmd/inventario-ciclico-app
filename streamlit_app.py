@@ -935,9 +935,21 @@ if not df.empty:
         busqueda = st.text_input("🔎 Buscar por producto o responsable")
 
         if busqueda:
+
+            # Intentar convertir a número para búsqueda por ID
+            try:
+                busqueda_id = int(busqueda)
+                filtro_id = df_eliminar["id"] == busqueda_id
+            except:
+                filtro_id = False
+
+            filtro_producto = df_eliminar["producto"].str.contains(busqueda, case=False, na=False)
+            filtro_responsable = df_eliminar["responsable"].str.contains(busqueda, case=False, na=False)
+
             df_eliminar = df_eliminar[
-                df_eliminar["producto"].str.contains(busqueda, case=False, na=False) |
-                df_eliminar["responsable"].str.contains(busqueda, case=False, na=False)
+                filtro_producto |
+                filtro_responsable |
+                filtro_id
             ]
 
         # Selección múltiple

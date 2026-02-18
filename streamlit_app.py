@@ -13,9 +13,8 @@ engine = create_engine(DATABASE_URL)
 # Configuración de la página
 st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭")
 
-st.title("🏭 Sistema de Inventario Cíclico - Sulfato")
-st.write("DEBUG GENERAL")
-st.write("Registro de inventario con base de datos permanent")
+st.title("🏭 Sistema de Inventario Cíclico - Sulfatos")
+st.write("Registro de inventario con base de datos permanente")
 
 # --- CONFIGURACIÓN ARCHIVOS ---
 DB_PATH = "inventario.db"
@@ -834,8 +833,6 @@ st.divider()
 st.header("📋 Historial de inventario")
 
 df = obtener_inventario()
-st.write("PRUEBA COLUMNAS DF:")
-st.dataframe(df.head())
 
 if not df.empty:
     st.subheader("🔍 Filtros")
@@ -910,8 +907,7 @@ if not df.empty:
 
 
     # Mostrar resultados
-    st.write("Columnas disponibles:", df_filtrado.columns.tolist())
-
+ 
     columnas_mostrar = [
         'id', 'fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion',
         'presentacion', 'cantidad_unidades', 'total_kg_lt',

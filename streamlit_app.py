@@ -593,7 +593,7 @@ def guardar_catalogo(catalogo):
 # Cargar catálogo
 CATALOGO_PRODUCTOS = cargar_catalogo()
 
-# --- CONFIGURACIÓN SQLITE ---
+# --- CONFIGURACIÓN PostgreSQL ---
 def get_connection():
     """Devuelve una conexión a PostgreSQL"""
     return engine.connect()
@@ -681,6 +681,17 @@ if 'producto_sel' not in st.session_state:
     st.session_state.producto_sel = list(CATALOGO_PRODUCTOS.keys())[0]
 if 'cantidad_val' not in st.session_state:
     st.session_state.cantidad_val = 0
+
+# SECCIÓN 0: CAMBIAR FECHA DE INVENTARIO
+st.subheader("📅 Fecha del inventario")
+
+usar_fecha_manual = st.checkbox("Cambiar fecha del inventario")
+
+if usar_fecha_manual:
+    fecha_manual = st.date_input("Seleccionar fecha")
+    fecha_registro = datetime.combine(fecha_manual, datetime.min.time())
+else:
+    fecha_registro = datetime.now()
 
 # --- SECCIÓN 1: AGREGAR PRODUCTO ---
 st.header("➕ Registrar nuevo conteo")

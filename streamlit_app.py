@@ -836,61 +836,85 @@ df = obtener_inventario()
 
 if not df.empty:
     st.subheader("🔍 Filtros")
-    # Convertir fecha_hora a tipo fecha si no lo está
+
+    # Asegurar formato datetime
     df["fecha_hora"] = pd.to_datetime(df["fecha_hora"])
 
-    # Filtro por rango de fechas
+    # Obtener rango disponible
     fecha_min = df["fecha_hora"].min().date()
     fecha_max = df["fecha_hora"].max().date()
 
+    # Selector de fechas
     rango_fechas = st.date_input(
         "Filtrar por rango de fechas",
         value=(fecha_min, fecha_max),
         min_value=fecha_min,
         max_value=fecha_max
     )
-    if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
 
-        fecha_inicio, fecha_fin = rango_fechas
+    # Siempre comenzamos desde el dataframe original
+    df_filtrado = df.copy()
 
-        df_filtrado = df[
-            (df["fecha_hora"].dt.date >= fecha_inicio) &
-            (df["fecha_hora"].dt.date <= fecha_fin)
-        ]
+    # --- FILTRO DE FECHAS CORREGIDO ---
+    if isinstance(rango_fechas, tuple):
+
+        if len(rango_fechas) == 2:
+            inicio, fin = rango_fechas
+
+            df_filtrado = df_filtrado[
+                (df_filtrado["fecha_hora"].dt.date >= inicio) &
+                (df_filtrado["fecha_hora"].dt.date <= fin)
+            ]
+
+        elif len(rango_fechas) == 1:
+            unico_dia = rango_fechas[0]
+
+            df_filtrado = df_filtrado[
+                df_filtrado["fecha_hora"].dt.date == unico_dia
+            ]
 
     else:
-        # Si por alguna razón devuelve una sola fecha
-        df_filtrado = df[
-            df["fecha_hora"].dt.date == rango_fechas
+        # Cuando devuelve solo una fecha (no tupla)
+        df_filtrado = df_filtrado[
+            df_filtrado["fecha_hora"].dt.date == rango_fechas
         ]
+
+
+    # --- OTROS FILTROS ---
     col_f1, col_f2, col_f3 = st.columns(3)
+
     with col_f1:
         filtro_almacen = st.multiselect("Filtrar por Almacén", ALMACENES, key="hist_almacen")
+
     with col_f2:
-        filtro_clasificacion = st.multiselect("Filtrar por Clasificación", ["Producto Terminado", "Mercadería"], key="hist_clasif")
+        filtro_clasificacion = st.multiselect(
+            "Filtrar por Clasificación",
+            ["Producto Terminado", "Mercadería"],
+            key="hist_clasif"
+        )
+
     with col_f3:
         filtro_linea_hist = st.multiselect("Filtrar por Línea", LINEAS, key="hist_linea")
-    
-    df_filtrado = df.copy()
-    # Aplicar filtro de fechas
-    if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
-        inicio, fin = rango_fechas
-        df_filtrado = df_filtrado[
-            (df_filtrado["fecha_hora"].dt.date >= inicio) &
-            (df_filtrado["fecha_hora"].dt.date <= fin)
-        ]
+
     if filtro_almacen:
         df_filtrado = df_filtrado[df_filtrado["almacen"].isin(filtro_almacen)]
+
     if filtro_clasificacion:
         df_filtrado = df_filtrado[df_filtrado["clasificacion"].isin(filtro_clasificacion)]
+
     if filtro_linea_hist:
         df_filtrado = df_filtrado[df_filtrado["linea"].isin(filtro_linea_hist)]
-    
-    columnas_mostrar = ['fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion', 
-                       'presentacion', 'cantidad_unidades', 'total_kg_lt', 'unidad_medida', 
-                       'almacen', 'responsable', 'observaciones']
-    df_display = df_filtrado[columnas_mostrar] if all(col in df_filtrado.columns for col in columnas_mostrar) else df_filtrado
-    
+
+
+    # Mostrar resultados
+    columnas_mostrar = [
+        'fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion',
+        'presentacion', 'cantidad_unidades', 'total_kg_lt',
+        'unidad_medida', 'almacen', 'responsable', 'observaciones'
+    ]
+
+    df_display = df_filtrado[columnas_mostrar]
+
     st.dataframe(df_display, use_container_width=True)
     
     st.subheader("📊 Resumen")

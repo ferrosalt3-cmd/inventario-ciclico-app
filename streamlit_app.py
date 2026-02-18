@@ -13,9 +13,9 @@ engine = create_engine(DATABASE_URL)
 # Configuración de la página
 st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭")
 
-st.title("🏭 Sistema de Inventario Cíclico - Sulfatos")
+st.title("🏭 Sistema de Inventario Cíclico - Sulfato")
 st.write("DEBUG GENERAL")
-st.write("Registro de inventario con base de datos permanente")
+st.write("Registro de inventario con base de datos permanent")
 
 # --- CONFIGURACIÓN ARCHIVOS ---
 DB_PATH = "inventario.db"

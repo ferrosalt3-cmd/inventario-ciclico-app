@@ -908,14 +908,14 @@ if not df.empty:
 
 
     # Mostrar resultados
-    st.write("Columnas disponibles:", df_filtrado.columns.tolist())
+
 
     columnas_mostrar = [
         'id', 'fecha_hora', 'codigo', 'producto', 'linea', 'clasificacion',
         'presentacion', 'cantidad_unidades', 'total_kg_lt',
         'unidad_medida', 'almacen', 'responsable', 'observaciones'
     ]
-
+    st.write("Columnas disponibles:", df_filtrado.columns.tolist())
     df_display = df_filtrado[columnas_mostrar].sort_values(
         by="fecha_hora",
         ascending=False

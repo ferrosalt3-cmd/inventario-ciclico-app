@@ -839,12 +839,9 @@ if not df.empty:
     # Convertir fecha_hora a tipo fecha si no lo está
     df["fecha_hora"] = pd.to_datetime(df["fecha_hora"])
 
-    if fecha_inicio and fecha_fin:
-
-        df_filtrado = df[
-            (df["fecha_hora"].dt.date >= fecha_inicio) &
-            (df["fecha_hora"].dt.date <= fecha_fin)
-        ]
+    # Filtro por rango de fechas
+    fecha_min = df["fecha_hora"].min().date()
+    fecha_max = df["fecha_hora"].max().date()
 
     rango_fechas = st.date_input(
         "Filtrar por rango de fechas",

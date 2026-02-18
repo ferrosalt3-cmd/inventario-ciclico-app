@@ -849,6 +849,20 @@ if not df.empty:
         min_value=fecha_min,
         max_value=fecha_max
     )
+    if isinstance(rango_fechas, tuple) and len(rango_fechas) == 2:
+
+        fecha_inicio, fecha_fin = rango_fechas
+
+        df_filtrado = df[
+            (df["fecha_hora"].dt.date >= fecha_inicio) &
+            (df["fecha_hora"].dt.date <= fecha_fin)
+        ]
+
+    else:
+        # Si por alguna razón devuelve una sola fecha
+        df_filtrado = df[
+            df["fecha_hora"].dt.date == rango_fechas
+        ]
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
         filtro_almacen = st.multiselect("Filtrar por Almacén", ALMACENES, key="hist_almacen")

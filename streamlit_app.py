@@ -1084,73 +1084,73 @@ else:
 
 # --- ADMINISTRACIÓN: AGREGAR PRODUCTOS ---
 if rol == "Administrador":
-with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
-    st.write("Aquí puedes agregar productos nuevos sin editar el código:")
+    with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
+        st.write("Aquí puedes agregar productos nuevos sin editar el código:")
     
-    with st.form("form_nuevo_producto"):
-        st.subheader("Nuevo Producto")
+        with st.form("form_nuevo_producto"):
+            st.subheader("Nuevo Producto")
         
-        nuevo_nombre = st.text_input("Descripción del producto *", key="admin_nombre")
-        nuevo_codigo = st.text_input("Código *", key="admin_codigo")
+            nuevo_nombre = st.text_input("Descripción del producto *", key="admin_nombre")
+            nuevo_codigo = st.text_input("Código *", key="admin_codigo")
         
-        col_np1, col_np2 = st.columns(2)
-        with col_np1:
-            nueva_clasificacion = st.selectbox("Clasificación *", ["Producto Terminado", "Mercadería"], key="admin_clasif")
-        with col_np2:
-            nueva_linea = st.selectbox("Línea *", LINEAS, key="admin_linea")
+            col_np1, col_np2 = st.columns(2)
+            with col_np1:
+                nueva_clasificacion = st.selectbox("Clasificación *", ["Producto Terminado", "Mercadería"], key="admin_clasif")
+            with col_np2:
+                nueva_linea = st.selectbox("Línea *", LINEAS, key="admin_linea")
         
-        col_np3, col_np4 = st.columns(2)
-        with col_np3:
-            nueva_presentacion = st.selectbox(
-                "Presentación *",
-                ["Sacos x 25 kg", "Bidones x 20 lt", "Bidón x 20 lt", "Bidón x 35 lt", 
-                 "Botella x 1 lt", "Bigbag x 1000 kg", "Bigbag x 1250 kg", 
-                 "Balde x 25 kg", "Otra"],
-                key="admin_presentacion"
-            )
-        with col_np4:
-            nueva_unidad = st.selectbox("Unidad de medida *", ["kg", "lt"], key="admin_unidad")
+            col_np3, col_np4 = st.columns(2)
+            with col_np3:
+                nueva_presentacion = st.selectbox(
+                    "Presentación *",
+                    ["Sacos x 25 kg", "Bidones x 20 lt", "Bidón x 20 lt", "Bidón x 35 lt", 
+                    "Botella x 1 lt", "Bigbag x 1000 kg", "Bigbag x 1250 kg", 
+                    "Balde x 25 kg", "Otra"],
+                    key="admin_presentacion"
+                )
+            with col_np4:
+                nueva_unidad = st.selectbox("Unidad de medida *", ["kg", "lt"], key="admin_unidad")
         
-        # Calcular factor internamente según presentación
-        if nueva_presentacion == "Otra":
-            factor_nuevo = st.number_input("Cantidad por unidad *", min_value=0.1, value=1.0, key="admin_factor_manual")
-        else:
-            numeros = re.findall(r'(\d+)', nueva_presentacion)
-            factor_nuevo = float(numeros[0]) if numeros else 1.0
+            # Calcular factor internamente según presentación
+            if nueva_presentacion == "Otra":
+                factor_nuevo = st.number_input("Cantidad por unidad *", min_value=0.1, value=1.0, key="admin_factor_manual")
+            else:
+                numeros = re.findall(r'(\d+)', nueva_presentacion)
+                factor_nuevo = float(numeros[0]) if numeros else 1.0
         
-        agregar = st.form_submit_button("Agregar al catálogo")
+            agregar = st.form_submit_button("Agregar al catálogo")
     
-    if agregar:
-        if nuevo_nombre and nuevo_codigo:
-            CATALOGO_PRODUCTOS[nuevo_nombre] = {
-                "codigo": nuevo_codigo,
-                "presentacion": nueva_presentacion,
-                "factor": factor_nuevo,
-                "unidad": nueva_unidad,
-                "clasificacion": nueva_clasificacion,
-                "linea": nueva_linea
-            }
-            guardar_catalogo(CATALOGO_PRODUCTOS)
-            st.success(f"✅ Producto '{nuevo_nombre}' agregado correctamente")
-            st.rerun()
-        else:
-            st.error("❌ Debes completar todos los campos obligatorios (*)")
+        if agregar:
+            if nuevo_nombre and nuevo_codigo:
+                CATALOGO_PRODUCTOS[nuevo_nombre] = {
+                    "codigo": nuevo_codigo,
+                    "presentacion": nueva_presentacion,
+                    "factor": factor_nuevo,
+                    "unidad": nueva_unidad,
+                    "clasificacion": nueva_clasificacion,
+                    "linea": nueva_linea
+                }
+                guardar_catalogo(CATALOGO_PRODUCTOS)
+                st.success(f"✅ Producto '{nuevo_nombre}' agregado correctamente")
+                st.rerun()
+            else:
+                st.error("❌ Debes completar todos los campos obligatorios (*)")
     
-    # Mostrar catálogo actual
-    st.subheader("Catálogo actual")
-    catalogo_df = pd.DataFrame.from_dict(CATALOGO_PRODUCTOS, orient='index')
-    st.dataframe(catalogo_df, use_container_width=True)
+        # Mostrar catálogo actual
+        st.subheader("Catálogo actual")
+        catalogo_df = pd.DataFrame.from_dict(CATALOGO_PRODUCTOS, orient='index')
+        st.dataframe(catalogo_df, use_container_width=True)
     
-    # Eliminar producto
-    st.subheader("🗑️ Eliminar producto del catálogo")
-    producto_a_eliminar = st.selectbox(
-        "Selecciona producto a eliminar",
-        options=list(CATALOGO_PRODUCTOS.keys()),
-        key="del_producto"
-    )
-    if st.button("Eliminar producto seleccionado", type="secondary"):
-        if producto_a_eliminar in CATALOGO_PRODUCTOS:
-            del CATALOGO_PRODUCTOS[producto_a_eliminar]
-            guardar_catalogo(CATALOGO_PRODUCTOS)
-            st.success(f"✅ Producto '{producto_a_eliminar}' eliminado.")
-            st.rerun()
+        # Eliminar producto
+        st.subheader("🗑️ Eliminar producto del catálogo")
+        producto_a_eliminar = st.selectbox(
+            "Selecciona producto a eliminar",
+            options=list(CATALOGO_PRODUCTOS.keys()),
+            key="del_producto"
+        )
+        if st.button("Eliminar producto seleccionado", type="secondary"):
+            if producto_a_eliminar in CATALOGO_PRODUCTOS:
+                del CATALOGO_PRODUCTOS[producto_a_eliminar]
+                guardar_catalogo(CATALOGO_PRODUCTOS)
+                st.success(f"✅ Producto '{producto_a_eliminar}' eliminado.")
+                st.rerun()

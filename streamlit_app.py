@@ -776,13 +776,17 @@ st.subheader("Paso 3: Ingresa los datos del conteo")
 
 col_cant, col_total = st.columns(2)
 with col_cant:
-    cantidad_unidades = st.number_input(
-        "Cantidad de unidades contadas *", 
-        min_value=0, 
-        value=st.session_state.cantidad_val,
-        key="cantidad_input"
+    expresion = st.text_input(
+        "Cantidad de unidades contadas * (puedes usar + - x)",
+        value=str(st.session_state.cantidad_val)
     )
-    st.session_state.cantidad_val = cantidad_unidades
+
+    try:
+        expresion_limpia = expresion.replace("x", "*")
+        cantidad_unidades = int(eval(expresion_limpia))
+        st.session_state.cantidad_val = cantidad_unidades
+    except:
+        cantidad_unidades = 0
 
 with col_total:
     total_calculado = cantidad_unidades * factor

@@ -11,7 +11,10 @@ import yaml
 from yaml.loader import SafeLoader
 
 # SOLO PARA GENERAR HASHES (BORRAR DESPUÉS)
-hashed_passwords = stauth.Hasher(['admin123', 'invent123']).generate()
+hashed_passwords = stauth.utilities.hasher.hash_passwords(
+    ['admin123', 'invent123']
+)
+
 st.write(hashed_passwords)
 
 config = {

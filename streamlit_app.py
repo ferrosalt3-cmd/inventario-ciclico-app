@@ -59,6 +59,8 @@ st.sidebar.success(f"Bienvenido {name}")
 
 rol = config['credentials']['usernames'][username]['role']
 
+st.sidebar.write(f"Rol actual: {rol}")
+
 DATABASE_URL = st.secrets["DATABASE_URL"]
 engine = create_engine(DATABASE_URL)
 
@@ -866,7 +868,7 @@ with st.form("formulario_inventario"):
     guardar = st.form_submit_button("💾 Guardar en base de datos")
 
 if guardar:
-    if not responsable:
+    if not responsable_final:
         st.error("❌ Debes ingresar el responsable del conteo")
     elif cantidad_unidades <= 0:
         st.error("❌ La cantidad debe ser mayor a 0")

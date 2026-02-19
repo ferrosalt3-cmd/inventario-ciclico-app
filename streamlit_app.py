@@ -10,6 +10,10 @@ import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
 
+# SOLO PARA GENERAR HASHES (BORRAR DESPUÉS)
+hashed_passwords = stauth.Hasher(['admin123', 'invent123']).generate()
+st.write(hashed_passwords)
+
 config = {
     'credentials': {
         'usernames': {
@@ -46,8 +50,8 @@ authentication_status = st.session_state.get("authentication_status")
 username = st.session_state.get("username")
 
 if authentication_status:
-    st.success(f"Bienvenido {name}")
-elif authentication_status == False:
+    pass
+elif authentication_status is False:
     st.error("Usuario o contraseña incorrectos")
     st.stop()
 elif authentication_status is None:
@@ -853,7 +857,12 @@ with st.form("formulario_inventario"):
     with col1:
         almacen = st.selectbox("Almacén", ALMACENES, key="form_almacen")
     with col2:
-        responsable = st.text_input("Responsable del conteo *", key="form_responsable")
+        responsable_manual = st.text_input("Responsable del conteo (opcional)")
+
+            if responsable_manual.strip() == "":
+                responsable_final = name
+            else:
+                responsable_final = responsable_manual
     
     observaciones = st.text_input("Observaciones (opcional)", key="form_obs")
     
@@ -1020,6 +1029,9 @@ if not df.empty:
     st.divider()
     st.subheader("🗑️ Eliminar registros del historial")
     if rol == "Administrador":
+        with st.expander("➕ Administración"):
+            st.write("Opciones exclusivas de administrador")
+
         if not df.empty:
 
             # Crear dataframe simplificado para eliminar
@@ -1089,6 +1101,8 @@ else:
 
 # --- ADMINISTRACIÓN: AGREGAR PRODUCTOS ---
 if rol == "Administrador":
+    if st.button("Eliminar inventario"):
+        eliminar_inventario()
     with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
         st.write("Aquí puedes agregar productos nuevos sin editar el código:")
     

@@ -852,18 +852,37 @@ with col_total:
 # FORMULARIO PARA LOS DATOS RESTANTES
 with st.form("formulario_inventario"):
     col1, col2 = st.columns(2)
+
     with col1:
         almacen = st.selectbox("Almacén", ALMACENES, key="form_almacen")
-    with col2:
-        responsable_manual = st.text_input("Responsable del conteo (opcional)")
 
-        if responsable_manual.strip() == "":
-            responsable_final = name
+    with col2:
+        if rol == "Administrador":
+            # Admin puede editar el responsable
+            responsable_manual = st.text_input(
+                "Responsable del conteo",
+                value=name
+            )
+
+            if responsable_manual.strip() == "":
+                responsable_final = name
+            else:
+                responsable_final = responsable_manual
+
         else:
-            responsable_final = responsable_manual
-    
-    observaciones = st.text_input("Observaciones (opcional)", key="form_obs")
-    
+            # Inventariador NO puede editar
+            responsable_final = name
+            st.text_input(
+                "Responsable del conteo",
+                value=name,
+                disabled=True
+            )
+
+    observaciones = st.text_input(
+        "Observaciones (opcional)",
+        key="form_obs"
+    )
+
     st.caption("Los campos con * son obligatorios")
     guardar = st.form_submit_button("💾 Guardar en base de datos")
 

@@ -9,11 +9,15 @@ from sqlalchemy import create_engine, text
 import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
+import bcrypt
 
 # SOLO PARA GENERAR HASHES (BORRAR DESPUÉS)
-hashed_passwords = stauth.utilities.hasher.hash_passwords(
-    ['admin123', 'invent123']
-)
+passwords = ['admin123', 'invent123']
+hashed_passwords = []
+
+for password in passwords:
+    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    hashed_passwords.append(hashed.decode())
 
 st.write(hashed_passwords)
 

@@ -6,6 +6,53 @@ import io
 from datetime import datetime
 import os
 from sqlalchemy import create_engine, text
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
+
+config = {
+    'credentials': {
+        'usernames': {
+            'admin': {
+                'name': 'Administrador',
+                'password': '$2b$12$KIXQ4QX8rFzKQFvL3WzHKuTn5q1e1QZ9E9Q7J8e9z0xYyXyXyXyXy',  # admin123
+                'role': 'Administrador'
+            },
+            'invent1': {
+                'name': 'Juan Perez',
+                'password': '$2b$12$KIXQ4QX8rFzKQFvL3WzHKuTn5q1e1QZ9E9Q7J8e9z0xYyXyXyXyXy',  # invent123
+                'role': 'Inventariador'
+            }
+        }
+    },
+    'cookie': {
+        'name': 'inventario_app',
+        'key': 'super_secret_key',
+        'expiry_days': 1
+    }
+}
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
+
+name, authentication_status, username = authenticator.login("Login", "main")
+
+if authentication_status is False:
+    st.error("Usuario o contraseña incorrectos")
+    st.stop()
+
+if authentication_status is None:
+    st.warning("Por favor ingresa tus credenciales")
+    st.stop()
+
+if authentication_status:
+    authenticator.logout("Cerrar sesión", "sidebar")
+    st.sidebar.success(f"Bienvenido {name}")
+    rol = config['credentials']['usernames'][username]['role']
 
 DATABASE_URL = st.secrets["DATABASE_URL"]
 engine = create_engine(DATABASE_URL)
@@ -967,75 +1014,76 @@ if not df.empty:
     # --- SECCIÓN ELIMINAR REGISTROS ---
     st.divider()
     st.subheader("🗑️ Eliminar registros del historial")
+    if rol == "Administrador":
+        if not df.empty:
 
-    if not df.empty:
+            # Crear dataframe simplificado para eliminar
+            df_eliminar = df[[
+                "id",
+                "fecha_hora",
+                "producto",
+                "cantidad_unidades",
+                "responsable"
+            ]].copy()
 
-        # Crear dataframe simplificado para eliminar
-        df_eliminar = df[[
-            "id",
-            "fecha_hora",
-            "producto",
-            "cantidad_unidades",
-            "responsable"
-        ]].copy()
+            # 🔎 Filtro opcional para facilitar búsqueda
+            busqueda = st.text_input("🔎 Buscar por producto o responsable")
 
-        # 🔎 Filtro opcional para facilitar búsqueda
-        busqueda = st.text_input("🔎 Buscar por producto o responsable")
+            if busqueda:
 
-        if busqueda:
+                # Intentar convertir a número para búsqueda por ID
+                try:
+                    busqueda_id = int(busqueda)
+                    filtro_id = df_eliminar["id"] == busqueda_id
+                except:
+                    filtro_id = False
 
-            # Intentar convertir a número para búsqueda por ID
-            try:
-                busqueda_id = int(busqueda)
-                filtro_id = df_eliminar["id"] == busqueda_id
-            except:
-                filtro_id = False
+                filtro_producto = df_eliminar["producto"].str.contains(busqueda, case=False, na=False)
+                filtro_responsable = df_eliminar["responsable"].str.contains(busqueda, case=False, na=False)
 
-            filtro_producto = df_eliminar["producto"].str.contains(busqueda, case=False, na=False)
-            filtro_responsable = df_eliminar["responsable"].str.contains(busqueda, case=False, na=False)
+                df_eliminar = df_eliminar[
+                    filtro_producto |
+                    filtro_responsable |
+                    filtro_id
+                ]
 
-            df_eliminar = df_eliminar[
-                filtro_producto |
-                filtro_responsable |
-                filtro_id
-            ]
-
-        # Selección múltiple
-        ids_seleccionados = st.multiselect(
-            "Selecciona uno o más registros para eliminar",
-            options=df_eliminar["id"],
-            format_func=lambda x: (
-                f"ID {x} - "
-                f"{df_eliminar[df_eliminar['id']==x]['fecha_hora'].values[0]} | "
-                f"{df_eliminar[df_eliminar['id']==x]['producto'].values[0]} | "
-                f"{df_eliminar[df_eliminar['id']==x]['cantidad_unidades'].values[0]} und | "
-                f"{df_eliminar[df_eliminar['id']==x]['responsable'].values[0]}"
+            # Selección múltiple
+            ids_seleccionados = st.multiselect(
+                "Selecciona uno o más registros para eliminar",
+                options=df_eliminar["id"],
+                format_func=lambda x: (
+                    f"ID {x} - "
+                    f"{df_eliminar[df_eliminar['id']==x]['fecha_hora'].values[0]} | "
+                    f"{df_eliminar[df_eliminar['id']==x]['producto'].values[0]} | "
+                    f"{df_eliminar[df_eliminar['id']==x]['cantidad_unidades'].values[0]} und | "
+                    f"{df_eliminar[df_eliminar['id']==x]['responsable'].values[0]}"
+                )
             )
-        )
 
-        if ids_seleccionados:
+            if ids_seleccionados:
 
-            st.warning("⚠️ Esta acción no se puede deshacer")
+                st.warning("⚠️ Esta acción no se puede deshacer")
 
-            confirmar = st.checkbox("Confirmar eliminación múltiple")
+                confirmar = st.checkbox("Confirmar eliminación múltiple")
 
-            if st.button("Eliminar registros seleccionados", type="primary", disabled=not confirmar):
-                for id_reg in ids_seleccionados:
-                    eliminar_registro(id_reg)
+                if st.button("Eliminar registros seleccionados", type="primary", disabled=not confirmar):
+                    for id_reg in ids_seleccionados:
+                        eliminar_registro(id_reg)
 
-                st.success(f"✅ {len(ids_seleccionados)} registro(s) eliminado(s) correctamente")
-                st.rerun()
+                    st.success(f"✅ {len(ids_seleccionados)} registro(s) eliminado(s) correctamente")
+                    st.rerun()
+
+            else:
+                st.info("ℹ️ Selecciona al menos un registro para habilitar la eliminación")
 
         else:
-            st.info("ℹ️ Selecciona al menos un registro para habilitar la eliminación")
-
-    else:
-        st.info("No hay registros disponibles para eliminar.")
+            st.info("No hay registros disponibles para eliminar.")
         
 else:
     st.info("Aún no hay registros. Agrega tu primer producto arriba.")
 
 # --- ADMINISTRACIÓN: AGREGAR PRODUCTOS ---
+if rol == "Administrador":
 with st.expander("➕ Administración: Agregar nuevos productos al catálogo"):
     st.write("Aquí puedes agregar productos nuevos sin editar el código:")
     

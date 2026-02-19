@@ -39,20 +39,25 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=config['cookie']['expiry_days']
 )
 
-name, authentication_status, username = authenticator.login(location="main")
+authenticator.login(location="main")
 
-if authentication_status is False:
+name = st.session_state.get("name")
+authentication_status = st.session_state.get("authentication_status")
+username = st.session_state.get("username")
+
+if authentication_status:
+    st.success(f"Bienvenido {name}")
+elif authentication_status == False:
     st.error("Usuario o contraseña incorrectos")
     st.stop()
-
-if authentication_status is None:
+elif authentication_status is None:
     st.warning("Por favor ingresa tus credenciales")
     st.stop()
 
-if authentication_status:
-    authenticator.logout("Cerrar sesión", "sidebar")
-    st.sidebar.success(f"Bienvenido {name}")
-    rol = config['credentials']['usernames'][username]['role']
+authenticator.logout(location="sidebar")
+st.sidebar.success(f"Bienvenido {name}")
+
+rol = config['credentials']['usernames'][username]['role']
 
 DATABASE_URL = st.secrets["DATABASE_URL"]
 engine = create_engine(DATABASE_URL)

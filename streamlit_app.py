@@ -9,29 +9,18 @@ from sqlalchemy import create_engine, text
 import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
-import bcrypt
-
-# SOLO PARA GENERAR HASHES (BORRAR DESPUÉS)
-passwords = ['admin123', 'invent123']
-hashed_passwords = []
-
-for password in passwords:
-    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
-    hashed_passwords.append(hashed.decode())
-
-st.write(hashed_passwords)
 
 config = {
     'credentials': {
         'usernames': {
             'admin': {
                 'name': 'Administrador',
-                'password': '$2b$12$KIXQ4QX8rFzKQFvL3WzHKuTn5q1e1QZ9E9Q7J8e9z0xYyXyXyXyXy',  # admin123
+                'password': '$2b$12$INwLeO7qcRsAxeYMlgFdoegNcLCSfzANxByvPxA9q2vgCDf9Z6hwy',
                 'role': 'Administrador'
             },
             'invent1': {
-                'name': 'Juan Perez',
-                'password': '$2b$12$KIXQ4QX8rFzKQFvL3WzHKuTn5q1e1QZ9E9Q7J8e9z0xYyXyXyXyXy',  # invent123
+                'name': 'Inventariador',
+                'password': '$2b$12$f6enjQHdNIJZbz3xTaWqz.1WqdkwyhiodeYrWaOnqI5MzDjaYEG8K',
                 'role': 'Inventariador'
             }
         }

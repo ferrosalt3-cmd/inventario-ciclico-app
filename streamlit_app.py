@@ -1024,9 +1024,11 @@ if not df.empty:
     )
     
     # --- SECCIÓN ELIMINAR REGISTROS ---
-    st.divider()
-    st.subheader("🗑️ Eliminar registros del historial")
     if rol == "Administrador":
+        
+        st.divider()
+        st.subheader("🗑️ Eliminar registros del historial")
+    
         with st.expander("➕ Administración"):
             st.write("Opciones exclusivas de administrador")
 

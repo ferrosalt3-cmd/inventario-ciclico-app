@@ -951,7 +951,7 @@ if not df.empty:
         output.seek(0)
         return output
 
-    excel_file = convertir_a_excel(df)
+    excel_file = convertir_a_excel(df_filtrado)
 
     st.download_button(
         label="Descargar Excel completo",

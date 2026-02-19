@@ -660,9 +660,11 @@ def obtener_inventario():
 
 def eliminar_registro(id_registro):
     """Elimina un registro de la base de datos por ID"""
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM inventario WHERE id = ?", (id_registro,))
+    with engine.connect() as conn:
+        conn.execute(
+            text("DELETE FROM inventario WHERE id = :id"),
+            {"id": id_registro}
+        )
         conn.commit()
 
 # Inicializar base de datos

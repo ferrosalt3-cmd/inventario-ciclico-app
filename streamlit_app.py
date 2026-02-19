@@ -884,7 +884,7 @@ if guardar:
             'total_kg_lt': total_calculado,
             'unidad_medida': unidad_label,
             'almacen': almacen,
-            'responsable': responsable,
+            'responsable': responsable_final,
             'observaciones': observaciones
         }
         guardar_registro(datos)

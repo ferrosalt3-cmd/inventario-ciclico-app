@@ -859,10 +859,10 @@ with st.form("formulario_inventario"):
     with col2:
         responsable_manual = st.text_input("Responsable del conteo (opcional)")
 
-            if responsable_manual.strip() == "":
-                responsable_final = name
-            else:
-                responsable_final = responsable_manual
+        if responsable_manual.strip() == "":
+            responsable_final = name
+        else:
+            responsable_final = responsable_manual
     
     observaciones = st.text_input("Observaciones (opcional)", key="form_obs")
     

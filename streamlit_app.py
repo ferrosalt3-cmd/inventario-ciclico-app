@@ -64,6 +64,17 @@ st.sidebar.write(f"Rol actual: {rol}")
 DATABASE_URL = st.secrets["DATABASE_URL"]
 engine = create_engine(DATABASE_URL)
 
+from sqlalchemy import text
+import pandas as pd
+import streamlit as st
+
+@st.cache_data
+def cargar_productos():
+    query = text("SELECT * FROM productos ORDER BY codigo")
+    df = pd.read_sql(query, engine)
+    return df
+
+
 # Configuración de la página
 st.set_page_config(page_title="Inventario Cíclico - Sulfatos", page_icon="🏭")
 
@@ -82,6 +93,11 @@ LINEAS = [
     "Fosfato Monoamonico", "Acido Borico", "Acido Fosforico", 
     "Quelatos", "Otras"
 ]
+
+productos_df = cargar_productos()
+
+st.write("Productos en la base de datos:")
+st.dataframe(productos_df)
 
 # --- FUNCIONES DEL CATÁLOGO ---
 def cargar_catalogo():
